@@ -22,6 +22,13 @@ const json = (status: number, body: unknown, problem = false) =>
  */
 export const createFakeServer = () => {
   const tasks: FakeTask[] = [];
+  const people: Array<{ id: string; name: string }> = [];
+  const problem = (status: number, code: string) =>
+    json(status, { type: 'about:blank', title: code, status, code }, true);
+  const withCount = (p: { id: string; name: string }) => ({
+    ...p,
+    assignedTaskCount: tasks.filter((t) => t.assignee?.id === p.id).length,
+  });
   let clock = Date.parse('2026-10-17T10:00:00.000Z');
   const failures: Array<() => Response | Promise<Response>> = [];
   let hold: Promise<void> | null = null;
@@ -35,6 +42,34 @@ export const createFakeServer = () => {
       if (failure) return failure();
     }
 
+    if (url.pathname === '/api/v1/people' && method === 'GET') {
+      const items = [...people].sort((x, y) => x.name.localeCompare(y.name, 'es')).map(withCount);
+      return json(200, { items });
+    }
+    if (url.pathname === '/api/v1/people' && method === 'POST') {
+      const body = JSON.parse(String(init?.body)) as { id: string; name: string };
+      const name = body.name.trim();
+      const existing = people.find((p) => p.id === body.id);
+      if (existing) return existing.name === name ? json(200, withCount(existing)) : problem(409, 'ID_CONFLICT');
+      if (people.some((p) => p.name.toLowerCase() === name.toLowerCase())) return problem(409, 'PERSON_NAME_TAKEN');
+      const person = { id: body.id, name };
+      people.push(person);
+      return json(201, withCount(person));
+    }
+    const personMatch = /^\/api\/v1\/people\/([^/]+)$/.exec(url.pathname);
+    if (personMatch && method === 'DELETE') {
+      const index = people.findIndex((p) => p.id === personMatch[1]);
+      if (index < 0) return problem(404, 'PERSON_NOT_FOUND');
+      const [removed] = people.splice(index, 1);
+      let unassignedTaskCount = 0;
+      for (const t of tasks) {
+        if (t.assignee?.id === removed!.id) {
+          t.assignee = null;
+          unassignedTaskCount += 1;
+        }
+      }
+      return json(200, { id: removed!.id, unassignedTaskCount });
+    }
     if (url.pathname === '/api/v1/tasks' && method === 'GET') {
       const counts = { pending: 0, in_progress: 0, done: 0 };
       tasks.forEach((t) => (counts[t.status] += 1));
@@ -81,6 +116,12 @@ export const createFakeServer = () => {
   return {
     fetchImpl,
     tasks,
+    people,
+    addPerson(name: string): string {
+      const id = crypto.randomUUID();
+      people.push({ id, name });
+      return id;
+    },
     addTask(partial: Partial<FakeTask> & { title: string }) {
       clock += 1000;
       const now = new Date(clock).toISOString();

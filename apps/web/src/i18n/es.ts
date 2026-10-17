@@ -59,6 +59,25 @@ export const es = {
     titleRequired: 'El título es obligatorio.',
     tooLong: (max: number) => `Máximo ${max} caracteres.`,
   },
+  people: {
+    open: 'Personas',
+    title: 'Personas del equipo',
+    empty: 'Todavía no hay personas. Añade a quien vaya a recibir tareas.',
+    name: 'Nombre',
+    add: 'Añadir',
+    added: (name: string) => `${name} añadida al equipo`,
+    removed: (name: string) => `${name} quitado del equipo`,
+    remove: (name: string) => `Quitar a ${name}`,
+    confirmRemove: 'Quitar',
+    cancel: 'Cancelar',
+    assigned: (n: number) => (n === 1 ? '1 tarea asignada' : `${n} tareas asignadas`),
+    removeWarning: (name: string, n: number) =>
+      n === 0
+        ? `Se quitará a ${name}. No tiene tareas asignadas.`
+        : `Se quitará a ${name}. ${n === 1 ? '1 tarea quedará' : `${n} tareas quedarán`} sin asignar.`,
+    nameRequired: 'El nombre es obligatorio.',
+    listLabel: 'Personas',
+  },
   move: {
     statusLabel: 'Estado',
     statusOf: (title: string) => `de «${title}»`,

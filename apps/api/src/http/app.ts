@@ -9,7 +9,7 @@ import {
 import type { Kysely } from 'kysely';
 import type { Database } from '../persistence/db';
 import { KyselyBoardRepository } from '../persistence/repositories/board-repository';
-import { KyselyPersonLookup } from '../persistence/repositories/person-lookup';
+import { KyselyPersonRepository } from '../persistence/repositories/person-repository';
 import { KyselyTaskRepository } from '../persistence/repositories/task-repository';
 import { nodeAccessCodeService } from '../security/access-code';
 import { authPlugin } from './plugins/auth';
@@ -17,6 +17,7 @@ import { errorHandlerPlugin } from './plugins/error-handler';
 import { DEFAULT_RATE_LIMITS, securityPlugin, type RateLimits } from './plugins/security';
 import { boardRoutes } from './routes/board';
 import { healthRoutes } from './routes/health';
+import { peopleRoutes } from './routes/people';
 import { taskRoutes } from './routes/tasks';
 
 export interface AppDeps {
@@ -48,11 +49,9 @@ export const buildApp = async (deps: AppDeps): Promise<FastifyInstance> => {
   await app.register(securityPlugin, { rateLimits });
 
   const boards = new KyselyBoardRepository(deps.db);
-  const taskDeps = {
-    tasks: new KyselyTaskRepository(deps.db),
-    people: new KyselyPersonLookup(deps.db),
-    clock: deps.clock,
-  };
+  const people = new KyselyPersonRepository(deps.db);
+  const taskDeps = { tasks: new KyselyTaskRepository(deps.db), people, clock: deps.clock };
+  const peopleDeps = { people, clock: deps.clock };
 
   await app.register(
     async (api) => {
@@ -66,6 +65,7 @@ export const buildApp = async (deps: AppDeps): Promise<FastifyInstance> => {
           });
           await v1.register(boardRoutes);
           await v1.register(taskRoutes, { deps: taskDeps });
+          await v1.register(peopleRoutes, { deps: peopleDeps });
         },
         { prefix: '/v1' },
       );
