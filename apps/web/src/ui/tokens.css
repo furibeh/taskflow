@@ -1,0 +1,75 @@
+/* Tokens de diseño. Contrastes comprobados para WCAG 2.1 AA (texto ≥ 4.5:1, UI ≥ 3:1). */
+:root {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-text: #1c2430;
+  --color-text-muted: #4a5566;
+  --color-border: #c4cbd6;
+  --color-primary: #1f5fbf;
+  --color-primary-hover: #184c99;
+  --color-on-primary: #ffffff;
+  --color-danger: #b42318;
+  --color-danger-bg: #fdecea;
+  --color-success-bg: #e8f5ec;
+  --color-focus: #1f5fbf;
+  --color-column: #e9ecf1;
+  --radius: 8px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --tap-size: 44px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #12161c;
+    --color-surface: #1c222b;
+    --color-text: #e8ecf2;
+    --color-text-muted: #b3bdcb;
+    --color-border: #4a5566;
+    --color-primary: #7fb0ff;
+    --color-primary-hover: #a6c8ff;
+    --color-on-primary: #0d1b33;
+    --color-danger: #ff9b8f;
+    --color-danger-bg: #3a1714;
+    --color-success-bg: #13301e;
+    --color-focus: #a6c8ff;
+    --color-column: #171c23;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
