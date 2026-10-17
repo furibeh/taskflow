@@ -18,6 +18,9 @@ const ERROR_MESSAGES: Record<ClientErrorCode, string> = {
   PERSON_NAME_TAKEN: 'Ya existe una persona con ese nombre.',
   ID_CONFLICT: 'No se pudo guardar. Inténtalo de nuevo.',
   UNDO_EXPIRED: 'Ya no se puede deshacer.',
+  BOARD_CREATION_DISABLED:
+    'En esta instalación no se pueden crear tableros desde la web. Pide el enlace a tu equipo.',
+  BOARD_CREATION_LIMITED: 'Has creado demasiados tableros. Inténtalo más tarde.',
   NOT_FOUND: 'No se encontró lo que buscabas.',
   RATE_LIMITED: 'Demasiadas acciones seguidas. Espera unos segundos.',
   SERVICE_UNAVAILABLE: 'No se pudo guardar. Revisa tu conexión.',
@@ -144,6 +147,47 @@ export const es = {
     undo: 'Deshacer',
     restored: 'Tarea restaurada',
     expired: 'Ya no se puede deshacer',
+  },
+  home: {
+    title: 'Tableros de tareas para tu equipo',
+    intro: 'Para entrar en el tablero de tu equipo necesitas su enlace. Pídeselo a alguien del equipo.',
+    creationDisabled: 'Para entrar en un tablero, pide el enlace a tu equipo.',
+    create: 'Crear tablero',
+    createNew: 'Crear un tablero nuevo',
+  },
+  createBoard: {
+    heading: 'Nuevo tablero',
+    name: 'Nombre del tablero',
+    submit: 'Crear tablero',
+    nameRequired: 'El nombre es obligatorio.',
+    conflict: 'No se pudo crear el tablero. Inténtalo de nuevo.',
+    lostLink: 'El tablero se creó, pero no se pudo mostrar su enlace. Crea otro tablero.',
+  },
+  newBoardLink: {
+    title: (name: string) => `Tablero «${name}» creado`,
+    warning: 'Guarda este enlace: no se volverá a mostrar.',
+    link: 'Enlace del tablero',
+    copy: 'Copiar enlace',
+    copied: 'Enlace copiado',
+    open: 'Abrir tablero',
+    confirmClose: 'No podrás volver a ver este enlace. ¿Cerrar de todos modos?',
+    closeAnyway: 'Cerrar de todos modos',
+    cancel: 'Cancelar',
+  },
+  boardMenu: {
+    open: 'Tablero',
+    rename: 'Cambiar nombre',
+    delete: 'Borrar tablero',
+    renamed: 'Nombre del tablero cambiado',
+    deleted: (name: string) => `Tablero «${name}» borrado`,
+    deleteWarning: (name: string, tasks: number, people: number) =>
+      `Se borrará el tablero «${name}» con ${tasks === 1 ? '1 tarea' : `${tasks} tareas`} y ${
+        people === 1 ? '1 persona' : `${people} personas`
+      }. No se puede deshacer.`,
+    confirmName: (name: string) => `Escribe «${name}» para confirmar`,
+    confirmDelete: 'Borrar tablero',
+    save: 'Guardar',
+    cancel: 'Cancelar',
   },
   detail: {
     status: 'Estado',

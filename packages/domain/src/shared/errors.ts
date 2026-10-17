@@ -19,7 +19,8 @@ export type DomainError =
   | { readonly code: 'ASSIGNEE_NOT_FOUND' }
   | { readonly code: 'PERSON_NAME_TAKEN' }
   | { readonly code: 'ID_CONFLICT' }
-  | { readonly code: 'UNDO_EXPIRED' };
+  | { readonly code: 'UNDO_EXPIRED' }
+  | { readonly code: 'BOARD_NOT_FOUND' };
 
 export type DomainErrorCode = DomainError['code'];
 
