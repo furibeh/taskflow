@@ -3,6 +3,7 @@ import * as m0001 from './0001_extensions';
 import * as m0002 from './0002_board';
 import * as m0003 from './0003_person';
 import * as m0004 from './0004_task';
+import * as m0005 from './0005_board_name';
 
 // Proveedor estático: las migraciones se importan explícitamente, de modo que funcionan igual
 // en la CLI, en las pruebas y en el contenedor, sin depender de rutas del sistema de archivos.
@@ -11,6 +12,7 @@ const migrations: Record<string, Migration> = {
   '0002_board': m0002,
   '0003_person': m0003,
   '0004_task': m0004,
+  '0005_board_name': m0005,
 };
 
 export const migrationProvider: MigrationProvider = {

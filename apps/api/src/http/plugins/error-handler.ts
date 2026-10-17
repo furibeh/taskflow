@@ -5,7 +5,7 @@ import {
   hasZodFastifySchemaValidationErrors,
   type ZodFastifySchemaValidationError,
 } from 'fastify-type-provider-zod';
-import { DomainFailure, domainExtras, domainStatus, sendProblem } from '../problem';
+import { DomainFailure, domainCode, domainExtras, domainStatus, sendProblem } from '../problem';
 
 const BODY_LIMIT_BYTES = 16 * 1024;
 
@@ -58,7 +58,7 @@ export const errorHandlerPlugin = fp(async (app: FastifyInstance) => {
       });
     }
     if (error instanceof DomainFailure) {
-      return sendProblem(reply, domainStatus(error.domainError), error.domainError.code, domainExtras(error.domainError));
+      return sendProblem(reply, domainStatus(error.domainError), domainCode(error.domainError), domainExtras(error.domainError));
     }
     if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
       return sendProblem(reply, 413, 'VALIDATION_ERROR', {

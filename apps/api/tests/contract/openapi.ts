@@ -5,9 +5,9 @@ import addFormatsModule from 'ajv-formats';
 import { parse } from 'yaml';
 import { expect } from 'vitest';
 
-// El contrato vive junto a la especificación de la feature (T040).
+// El contrato vigente vive junto a la especificación de la última feature (002, research R25).
 const CONTRACT_PATH = fileURLToPath(
-  new URL('../../../../specs/001-kanban-task-board/contracts/openapi.yaml', import.meta.url),
+  new URL('../../../../specs/002-multiple-boards/contracts/openapi.yaml', import.meta.url),
 );
 
 type Json = Record<string, unknown>;

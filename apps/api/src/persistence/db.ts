@@ -5,9 +5,11 @@ export type TaskStatusColumn = 'pending' | 'in_progress' | 'done';
 
 export interface BoardTable {
   id: string;
+  name: string;
   access_code_hash: Uint8Array;
   access_code_rotated_at: Date;
   created_at: ColumnType<Date, Date | undefined, never>;
+  updated_at: Date;
 }
 
 export interface PersonTable {

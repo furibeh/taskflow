@@ -1,4 +1,4 @@
-import type { AccessCodeService, Board, BoardRepository } from '../../src/board/board';
+import type { AccessCodeService, Board, BoardRepository, BoardStats, BoardSummary } from '../../src/board/board';
 import type { Clock } from '../../src/shared/clock';
 import type { IdGenerator } from '../../src/shared/ids';
 import { personNameKey, type Person, type PersonRepository, type PersonWithCount } from '../../src/people/person';
@@ -61,25 +61,71 @@ const sameBytes = (a: Uint8Array, b: Uint8Array): boolean =>
 export class InMemoryBoardRepository implements BoardRepository {
   private readonly boards = new Map<string, Board>();
 
+  /** Las tareas y personas se usan para los recuentos y el borrado en cascada. */
+  constructor(
+    private readonly people?: InMemoryPeople,
+    private readonly tasks?: InMemoryTaskRepository,
+  ) {}
+
   async findByAccessCodeHash(hash: Uint8Array): Promise<Board | null> {
     return [...this.boards.values()].find((b) => sameBytes(b.accessCodeHash, hash)) ?? null;
   }
 
-  async findAny(): Promise<Board | null> {
-    return this.boards.values().next().value ?? null;
+  async findById(id: string): Promise<Board | null> {
+    return this.boards.get(id) ?? null;
   }
 
-  async insert(board: Board): Promise<void> {
+  async count(): Promise<number> {
+    return this.boards.size;
+  }
+
+  async insert(board: Board): Promise<'inserted' | 'id_taken'> {
+    if (this.boards.has(board.id)) return 'id_taken';
     this.boards.set(board.id, board);
+    return 'inserted';
+  }
+
+  async rename(id: string, name: string, updatedAt: Date): Promise<boolean> {
+    const board = this.boards.get(id);
+    if (!board) return false;
+    this.boards.set(id, { ...board, name, updatedAt });
+    return true;
   }
 
   async updateAccessCodeHash(boardId: string, hash: Uint8Array, rotatedAt: Date): Promise<void> {
     const board = this.boards.get(boardId);
-    if (board) this.boards.set(boardId, { ...board, accessCodeHash: hash, accessCodeRotatedAt: rotatedAt });
+    if (board) {
+      this.boards.set(boardId, { ...board, accessCodeHash: hash, accessCodeRotatedAt: rotatedAt, updatedAt: rotatedAt });
+    }
   }
 
-  count(): number {
-    return this.boards.size;
+  async delete(id: string): Promise<boolean> {
+    if (!this.boards.delete(id)) return false;
+    this.tasks?.deleteBoard(id);
+    this.people?.deleteBoard(id);
+    return true;
+  }
+
+  async getStats(id: string): Promise<BoardStats> {
+    return {
+      taskCount: (await this.tasks?.list(id, {}))?.length ?? 0,
+      personCount: (await this.people?.listWithAssignedCount(id))?.length ?? 0,
+    };
+  }
+
+  async listSummaries(): Promise<BoardSummary[]> {
+    const boards = [...this.boards.values()].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return Promise.all(
+      boards.map(async (b) => ({
+        id: b.id,
+        name: b.name,
+        createdAt: b.createdAt,
+        ...(await this.getStats(b.id)),
+        lastActivityAt: new Date(
+          Math.max(b.updatedAt.getTime(), ...(this.tasks?.activityOf(b.id) ?? []), ...(this.people?.activityOf(b.id) ?? [])),
+        ),
+      })),
+    );
   }
 }
 
@@ -104,6 +150,15 @@ export class InMemoryPeople implements PersonRepository {
 
   async existsInBoard(boardId: string, personId: string): Promise<boolean> {
     return this.people.get(personId)?.boardId === boardId;
+  }
+
+  deleteBoard(boardId: string): void {
+    for (const [id, p] of this.people) if (p.boardId === boardId) this.people.delete(id);
+  }
+
+  /** Marcas de tiempo de actividad del tablero (research R24). */
+  activityOf(boardId: string): number[] {
+    return [...this.people.values()].filter((p) => p.boardId === boardId).map((p) => p.createdAt.getTime());
   }
 
   nameOf(personId: string): string | undefined {
@@ -161,6 +216,22 @@ export class InMemoryTaskRepository implements TaskRepository {
     for (const [id, task] of this.tasks) {
       if (task.assigneeId === personId) this.tasks.set(id, { ...task, assigneeId: null });
     }
+  }
+
+  deleteBoard(boardId: string): void {
+    for (const [id, t] of this.tasks) {
+      if (t.boardId === boardId) {
+        this.tasks.delete(id);
+        this.deletedAt.delete(id);
+      }
+    }
+  }
+
+  /** Marcas de tiempo de actividad del tablero, incluidas las tareas borradas (research R24). */
+  activityOf(boardId: string): number[] {
+    return [...this.tasks.values()]
+      .filter((t) => t.boardId === boardId)
+      .flatMap((t) => [t.updatedAt.getTime(), this.deletedAt.get(t.id)?.getTime() ?? 0]);
   }
 
   async insert(task: Task): Promise<'inserted' | 'id_taken'> {

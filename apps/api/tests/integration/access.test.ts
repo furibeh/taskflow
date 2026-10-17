@@ -27,7 +27,7 @@ describe('acceso por enlace secreto y base HTTP', () => {
   it('GET /api/v1/board con código válido devuelve el tablero', async () => {
     const res = await t.app.inject({ method: 'GET', url: '/api/v1/board', headers: t.authHeader() });
     expect(res.statusCode).toBe(200);
-    expect(res.json().id).toBe(t.boardId);
+    expect(res.json()).toMatchObject({ id: t.boardId, name: 'Mi tablero', taskCount: 0, personCount: 0 });
     expectMatchesContract('getBoard', 200, res.json());
   });
 

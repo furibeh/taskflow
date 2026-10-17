@@ -61,6 +61,8 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       # Solo el contenedor web (IP fija) puede indicar la IP real del cliente (plan D11).
       TRUST_PROXY: 172.28.0.10
+      BOARD_CREATION_ENABLED: ${BOARD_CREATION_ENABLED:-true}
+      BOARD_CREATION_PER_HOUR: ${BOARD_CREATION_PER_HOUR:-10}
     networks:
       - taskflow
     ports:

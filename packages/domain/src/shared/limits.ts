@@ -9,3 +9,7 @@ export const SEARCH_MAX = 100;
 export const UNDO_WINDOW_UI_MS = 10_000;
 export const UNDO_WINDOW_SERVER_MS = 15_000;
 export const CLIENT_TIMEOUT_MS = 10_000;
+// Nombre del tablero (feature 002, FR-112, FR-118).
+export const BOARD_NAME_MIN = 1;
+export const BOARD_NAME_MAX = 60;
+export const DEFAULT_BOARD_NAME = 'Mi tablero';
