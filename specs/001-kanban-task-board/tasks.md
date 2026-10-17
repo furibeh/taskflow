@@ -233,17 +233,17 @@ asignación y moverla a Hecha sin responsable.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T095 [P] [US3] Write domain tests in `packages/domain/tests/unit/use-cases/assign-task.test.ts`: `createTask` with valid `assigneeId` stores it; with unknown or other-board person → `ASSIGNEE_NOT_FOUND`; `updateTask {assigneeId}` reassigns; `{assigneeId: null}` unassigns and keeps status; unassigned task can move to `in_progress` and `done`
-- [ ] T096 [P] [US3] Write API tests in `apps/api/tests/integration/tasks-assign.test.ts`: create with assignee → response `assignee {id, name}`; PATCH reassign / null; unknown person → 422 `ASSIGNEE_NOT_FOUND`; after `DELETE /people/{id}` the task shows `assignee: null`; contract validation
-- [ ] T097 [P] [US3] Write component tests in `apps/web/tests/tasks/assignee.test.tsx`: `AssigneeSelect` lists "Sin asignar" + people; with empty people list shows only "Sin asignar" and hint "Añade personas desde «Personas»"; card shows "Sin asignar" with icon and text (not color only); no axe violations
-- [ ] T098 [P] [US3] Write E2E test in `e2e/tests/us3-assign.spec.ts`: assign at creation, reassign, unassign, move unassigned task to Hecha (desktop + mobile-320)
+- [X] T095 [P] [US3] Write domain tests in `packages/domain/tests/unit/use-cases/assign-task.test.ts`: `createTask` with valid `assigneeId` stores it; with unknown or other-board person → `ASSIGNEE_NOT_FOUND`; `updateTask {assigneeId}` reassigns; `{assigneeId: null}` unassigns and keeps status; unassigned task can move to `in_progress` and `done`
+- [X] T096 [P] [US3] Write API tests in `apps/api/tests/integration/tasks-assign.test.ts`: create with assignee → response `assignee {id, name}`; PATCH reassign / null; unknown person → 422 `ASSIGNEE_NOT_FOUND`; after `DELETE /people/{id}` the task shows `assignee: null`; contract validation
+- [X] T097 [P] [US3] Write component tests in `apps/web/tests/tasks/assignee.test.tsx`: `AssigneeSelect` lists "Sin asignar" + people; with empty people list shows only "Sin asignar" and hint "Añade personas desde «Personas»"; card shows "Sin asignar" with icon and text (not color only); no axe violations
+- [X] T098 [P] [US3] Write E2E test in `e2e/tests/us3-assign.spec.ts`: assign at creation, reassign, unassign, move unassigned task to Hecha (desktop + mobile-320)
 
 ### Implementation for User Story 3
 
-- [ ] T099 [US3] Extend `createTask` and `updateTask` in `packages/domain/src/use-cases/tasks.ts` to validate `assigneeId` through `PersonRepository.findById(boardId, id)` (→ `ASSIGNEE_NOT_FOUND`) and accept `null`; T095 must pass
-- [ ] T100 [US3] Ensure `KyselyTaskRepository` in `apps/api/src/persistence/repositories/task-repository.ts` persists `assignee_id` on insert/update and the routes in `apps/api/src/http/routes/tasks.ts` pass the `PersonRepository` to the use cases; T096 must pass
-- [ ] T101 [P] [US3] Implement `AssigneeSelect` in `apps/web/src/features/tasks/AssigneeSelect.tsx` (native labelled `<select>` with "Sin asignar" + people from `usePeople()`, disabled while saving, empty-list hint)
-- [ ] T102 [US3] Use `AssigneeSelect` in `apps/web/src/features/tasks/CreateTaskForm.tsx` (optional at creation) and in `apps/web/src/features/tasks/TaskDetailDialog.tsx` (change via `useUpdateTask`; `ASSIGNEE_NOT_FOUND` → "La persona elegida ya no está en el equipo." and refetch people); T097–T098 must pass
+- [X] T099 [US3] Extend `createTask` and `updateTask` in `packages/domain/src/use-cases/tasks.ts` to validate `assigneeId` through `PersonRepository.findById(boardId, id)` (→ `ASSIGNEE_NOT_FOUND`) and accept `null`; T095 must pass
+- [X] T100 [US3] Ensure `KyselyTaskRepository` in `apps/api/src/persistence/repositories/task-repository.ts` persists `assignee_id` on insert/update and the routes in `apps/api/src/http/routes/tasks.ts` pass the `PersonRepository` to the use cases; T096 must pass
+- [X] T101 [P] [US3] Implement `AssigneeSelect` in `apps/web/src/features/tasks/AssigneeSelect.tsx` (native labelled `<select>` with "Sin asignar" + people from `usePeople()`, disabled while saving, empty-list hint)
+- [X] T102 [US3] Use `AssigneeSelect` in `apps/web/src/features/tasks/CreateTaskForm.tsx` (optional at creation) and in `apps/web/src/features/tasks/TaskDetailDialog.tsx` (change via `useUpdateTask`; `ASSIGNEE_NOT_FOUND` → "La persona elegida ya no está en el equipo." and refetch people); T097–T098 must pass
 
 **Checkpoint**: US1, US2, US6 y US3 funcionan de forma independiente.
 

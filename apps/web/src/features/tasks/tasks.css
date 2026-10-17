@@ -74,3 +74,18 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.field__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+.task-detail__assignee {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.task-detail__saving {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}

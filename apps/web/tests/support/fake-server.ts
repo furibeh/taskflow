@@ -76,9 +76,16 @@ export const createFakeServer = () => {
       return json(200, { items: [...tasks].reverse(), counts });
     }
     if (url.pathname === '/api/v1/tasks' && method === 'POST') {
-      const body = JSON.parse(String(init?.body)) as { id: string; title: string; description?: string };
+      const body = JSON.parse(String(init?.body)) as {
+        id: string;
+        title: string;
+        description?: string;
+        assigneeId?: string | null;
+      };
       const existing = tasks.find((t) => t.id === body.id);
       if (existing) return json(200, existing);
+      const owner = body.assigneeId ? people.find((p) => p.id === body.assigneeId) : null;
+      if (body.assigneeId && !owner) return problem(422, 'ASSIGNEE_NOT_FOUND');
       clock += 1000;
       const now = new Date(clock).toISOString();
       const task: FakeTask = {
@@ -86,7 +93,7 @@ export const createFakeServer = () => {
         title: body.title.trim(),
         description: (body.description ?? '').trim(),
         status: 'pending',
-        assignee: null,
+        assignee: owner ? { id: owner.id, name: owner.name } : null,
         createdAt: now,
         updatedAt: now,
       };
@@ -99,7 +106,14 @@ export const createFakeServer = () => {
       if (!task) {
         return json(404, { type: 'about:blank', title: 'La tarea no existe', status: 404, code: 'TASK_NOT_FOUND' }, true);
       }
-      const body = JSON.parse(String(init?.body)) as Partial<FakeTask>;
+      const { assigneeId, ...body } = JSON.parse(String(init?.body)) as Partial<FakeTask> & {
+        assigneeId?: string | null;
+      };
+      if (assigneeId !== undefined) {
+        const owner = assigneeId ? people.find((p) => p.id === assigneeId) : null;
+        if (assigneeId && !owner) return problem(422, 'ASSIGNEE_NOT_FOUND');
+        task.assignee = owner ? { id: owner.id, name: owner.name } : null;
+      }
       clock += 1000;
       Object.assign(task, body, { updatedAt: new Date(clock).toISOString() });
       return json(200, task);
