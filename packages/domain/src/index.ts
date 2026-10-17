@@ -7,6 +7,7 @@ export * from './shared/ids';
 export * from './board/board';
 export * from './tasks/task';
 export * from './tasks/task-repository';
+export * from './tasks/task-criteria';
 export * from './people/person-lookup';
 export * from './people/person';
 export * from './use-cases/board';

@@ -26,6 +26,8 @@ test('US2: arrastrar con el ratón de Pendiente a Hecha', async ({ page }, testI
   await openBoard(page);
 
   const card = page.locator('article.card', { hasText: 'Preparar demo' });
+  await page.getByRole('region', { name: 'Tablero de tareas' }).scrollIntoViewIfNeeded();
+  await card.scrollIntoViewIfNeeded();
   const source = await card.locator('.card__assignee').boundingBox();
   const target = await page.getByRole('region', { name: /^Hecha/ }).boundingBox();
   await page.mouse.move(source!.x + source!.width / 2, source!.y + source!.height / 2);

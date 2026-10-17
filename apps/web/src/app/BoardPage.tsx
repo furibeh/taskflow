@@ -1,31 +1,67 @@
 import type { TaskDto } from '@taskflow/contracts';
-import { useState } from 'react';
-import { useTasks } from '../api/tasks';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { usePeople } from '../api/people';
+import { tasksQueryKey, useTasks } from '../api/tasks';
 import { Board } from '../features/board/Board';
+import { FiltersBar } from '../features/filters/FiltersBar';
+import { NoResults } from '../features/filters/NoResults';
+import { useFilters } from '../features/filters/useFilters';
 import { CreateTaskForm } from '../features/tasks/CreateTaskForm';
 import { TaskDetailDialog } from '../features/tasks/TaskDetailDialog';
 import { es } from '../i18n/es';
 import { ErrorAlert } from '../ui/ErrorAlert';
 import { OperationError, OperationFeedbackProvider } from '../ui/OperationFeedback';
 
-/** Página principal: formulario de creación, tablero y detalle de tarea (US1). */
+/** Página principal: creación, búsqueda y filtros, tablero y detalle de tarea. */
 export const BoardPage = () => {
-  const tasks = useTasks();
+  const filters = useFilters();
+  const tasks = useTasks(filters.query);
+  const people = usePeople();
+  const queryClient = useQueryClient();
   const [openTask, setOpenTask] = useState<TaskDto | null>(null);
+  // Aviso ligado a la consulta en la que se creó la tarea: desaparece al cambiar los filtros.
+  const [hiddenNoticeFor, setHiddenNoticeFor] = useState<typeof filters.query | null>(null);
+  const { assignee, setAssignee } = filters;
+
+  // Si la persona filtrada ya no existe, el filtro vuelve a "Todos" (US4, escenario 11).
+  useEffect(() => {
+    const knownPeople = people.data;
+    if (!knownPeople || assignee === 'all' || assignee === 'unassigned') return;
+    if (!knownPeople.some((p) => p.id === assignee)) setAssignee('all');
+  }, [people.data, assignee, setAssignee]);
+
+  // La tarea se crea aunque no cumpla los filtros; se avisa de que no está visible (US4).
+  const onCreated = (task: TaskDto) => {
+    const visible = queryClient
+      .getQueryData<{ items: TaskDto[] }>(tasksQueryKey(filters.query))
+      ?.items.some((t) => t.id === task.id);
+    setHiddenNoticeFor(filters.isActive && !visible ? filters.query : null);
+  };
+
+  const items = tasks.data?.items;
 
   return (
     <OperationFeedbackProvider>
       <main className="page">
-        <CreateTaskForm />
+        <CreateTaskForm onCreated={onCreated} />
+        {hiddenNoticeFor === filters.query && (
+          <p className="hidden-notice" role="status">
+            {es.filters.hiddenCreated}
+          </p>
+        )}
+        <FiltersBar filters={filters} />
         <OperationError />
         {tasks.isPending && <p>{es.loading}</p>}
-        {tasks.isError && (
-          <ErrorAlert message={es.loadError} onRetry={() => void tasks.refetch()} />
-        )}
-        {tasks.data && (
+        {tasks.isError && <ErrorAlert message={es.loadError} onRetry={() => void tasks.refetch()} />}
+        {items && (
           <>
-            {tasks.data.items.length === 0 && <p className="page__empty">{es.board.emptyBoard}</p>}
-            <Board tasks={tasks.data.items} onOpenTask={setOpenTask} />
+            {items.length === 0 && !filters.isActive && <p className="page__empty">{es.board.emptyBoard}</p>}
+            {items.length === 0 && filters.isActive ? (
+              <NoResults search={filters.appliedSearch} onClear={filters.clearAll} />
+            ) : (
+              <Board tasks={items} onOpenTask={setOpenTask} />
+            )}
           </>
         )}
         <TaskDetailDialog task={openTask} onClose={() => setOpenTask(null)} />

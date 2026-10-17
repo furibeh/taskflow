@@ -1,5 +1,6 @@
 import {
   CreateTaskRequestSchema,
+  ListTasksQuerySchema,
   ListTasksResponseSchema,
   ProblemSchema,
   TaskIdParamsSchema,
@@ -11,6 +12,7 @@ import {
   createTask,
   getTask,
   listTasks,
+  parseTaskCriteria,
   updateTask,
   type TaskDeps,
   type TaskView,
@@ -33,9 +35,15 @@ export const toTaskDto = (task: TaskView): TaskDto => ({
 export const taskRoutes: FastifyPluginAsyncZod<{ deps: TaskDeps }> = async (app, { deps }) => {
   app.get(
     '/tasks',
-    { schema: { response: { 200: ListTasksResponseSchema } } },
+    { schema: { querystring: ListTasksQuerySchema, response: { 200: ListTasksResponseSchema } } },
     async (request) => {
-      const { items, counts } = await listTasks(deps, currentBoard(request).id);
+      const criteria = parseTaskCriteria({
+        assignee: request.query.assignee,
+        statuses: request.query.status,
+        q: request.query.q,
+      });
+      if (!criteria.ok) throw new DomainFailure(criteria.error);
+      const { items, counts } = await listTasks(deps, currentBoard(request).id, criteria.value);
       return { items: items.map(toTaskDto), counts };
     },
   );

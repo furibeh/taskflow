@@ -71,9 +71,19 @@ export const createFakeServer = () => {
       return json(200, { id: removed!.id, unassignedTaskCount });
     }
     if (url.pathname === '/api/v1/tasks' && method === 'GET') {
+      const fold = (v: string) => v.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+      const assignee = url.searchParams.get('assignee');
+      const statuses = url.searchParams.getAll('status');
+      const q = fold((url.searchParams.get('q') ?? '').trim());
+      const visible = [...tasks].reverse().filter(
+        (t) =>
+          (!assignee || (assignee === 'unassigned' ? t.assignee === null : t.assignee?.id === assignee)) &&
+          (statuses.length === 0 || statuses.includes(t.status)) &&
+          (!q || fold(t.title).includes(q) || fold(t.description).includes(q)),
+      );
       const counts = { pending: 0, in_progress: 0, done: 0 };
-      tasks.forEach((t) => (counts[t.status] += 1));
-      return json(200, { items: [...tasks].reverse(), counts });
+      visible.forEach((t) => (counts[t.status] += 1));
+      return json(200, { items: visible, counts });
     }
     if (url.pathname === '/api/v1/tasks' && method === 'POST') {
       const body = JSON.parse(String(init?.body)) as {
