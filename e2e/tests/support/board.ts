@@ -21,7 +21,8 @@ export const resetBoardData = async (): Promise<void> => {
 
 export const openBoard = async (page: Page): Promise<void> => {
   await page.goto(`/#k=${accessCode()}`);
-  await expect(page.getByRole('heading', { name: 'TaskFlow', level: 1 })).toBeVisible();
+  // La cabecera muestra el nombre del tablero (feature 002); se espera al propio tablero.
+  await expect(page.getByRole('region', { name: 'Tablero de tareas' })).toBeVisible();
 };
 
 export const expectNoA11yViolations = async (page: Page): Promise<void> => {
