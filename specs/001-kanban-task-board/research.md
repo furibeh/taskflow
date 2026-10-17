@@ -118,6 +118,11 @@ según la constitución, requieren aprobación explícita antes de implementarse
 - **Decisión**:
   - `@fastify/rate-limit` por IP: 300 peticiones/min en total y 60 escrituras/min; las
     respuestas `401` cuentan contra un límite de 20/min por IP para frenar fuerza bruta.
+  - Los tres valores se configuran con `RATE_LIMIT_GLOBAL`, `RATE_LIMIT_WRITES` y
+    `RATE_LIMIT_UNAUTHORIZED` (por defecto 300/60/20). Se pueden subir (los E2E usan valores
+    holgados), pero **nunca desactivar**: el mínimo es 1 y la API no arranca con `0` u otros
+    valores no numéricos. Decidido por el usuario el 2026-10-17 (opción A), en lugar de un
+    interruptor que los apagara.
   - `@fastify/helmet` con CSP estricta (`default-src 'self'`), `X-Content-Type-Options`,
     `frame-ancestors 'none'`.
   - Tamaño máximo de cuerpo: 16 KiB.

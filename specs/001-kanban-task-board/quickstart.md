@@ -21,6 +21,10 @@ npm ci
 
 Comprobación: `git check-ignore .env` imprime `.env`.
 
+Opcional: los límites de peticiones por IP y minuto se ajustan en `.env` con
+`RATE_LIMIT_GLOBAL` (300), `RATE_LIMIT_WRITES` (60) y `RATE_LIMIT_UNAUTHORIZED` (20). Pueden
+subirse, pero no desactivarse (mínimo 1).
+
 ## 2. Arranque
 
 ```bash

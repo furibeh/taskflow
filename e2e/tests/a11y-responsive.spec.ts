@@ -68,6 +68,18 @@ test('tablero, diálogos y aviso: WCAG 2.1 AA, objetivos de 44 px y sin scroll h
   await expectTapTargets(page);
 });
 
+test('modo oscuro: sin incumplimientos WCAG 2.1 AA (contraste incluido)', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await openBoard(page);
+  await expect(page.getByRole('button', { name: 'Preparar demo', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
+  await expectNoA11yViolations(page);
+
+  await page.getByRole('button', { name: 'Preparar demo', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Preparar demo' })).toBeVisible();
+  await expectNoA11yViolations(page);
+});
+
 test('recorrido completo solo con teclado: crear, cambiar estado, asignar, filtrar, borrar y deshacer', async ({
   page,
 }) => {

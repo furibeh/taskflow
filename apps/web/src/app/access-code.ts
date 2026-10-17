@@ -21,6 +21,12 @@ export const setAccessCode = (code: string): void => {
   window.history.replaceState(window.history.state, '', url);
 };
 
+/** Vuelve a leer el código del fragmento (p. ej., tras pegar un enlace en la misma pestaña). */
+export const reloadAccessCodeFromHash = (): string | null => {
+  accessCode = readFromHash();
+  return accessCode;
+};
+
 /** Solo para pruebas. */
 export const resetAccessCodeForTests = (): void => {
   accessCode = null;

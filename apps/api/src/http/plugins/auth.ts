@@ -38,7 +38,10 @@ export const authPlugin = fp<AuthOptions>(async (app: FastifyInstance, options) 
   app.decorateRequest('board', null);
 
   app.addHook('onRequest', async (request, reply) => {
-    if (failures?.isBlocked(request.ip)) return sendProblem(reply, 429, 'RATE_LIMITED');
+    if (failures?.isBlocked(request.ip)) {
+      reply.header('retry-after', String(failures.retryAfterSeconds(request.ip)));
+      return sendProblem(reply, 429, 'RATE_LIMITED');
+    }
 
     const match = BEARER.exec(request.headers.authorization ?? '');
     const board = await resolveBoard(options, match?.[1]);

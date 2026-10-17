@@ -49,6 +49,16 @@ test('US1: el título vacío no crea nada', async ({ page }) => {
   await expect(page.getByText(/Todavía no hay tareas/)).toBeVisible();
 });
 
+test('US1: el título de una tarjeta con texto corto mide al menos 44×44 px (FR-033)', async ({ page }) => {
+  await openBoard(page);
+  await page.getByLabel('Título').fill('A');
+  await page.getByRole('button', { name: 'Crear tarea' }).click();
+  await showColumn(page, 'Pendiente');
+  const box = await columnRegion(page, 'Pendiente').getByRole('button', { name: 'A', exact: true }).boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(44);
+  expect(box!.height).toBeGreaterThanOrEqual(44);
+});
+
 test('US1: sin desplazamiento horizontal', async ({ page }) => {
   await openBoard(page);
   const overflow = await page.evaluate(
