@@ -81,7 +81,52 @@ export class KyselyTaskRepository implements TaskRepository {
     return this.findById(task.boardId, task.id);
   }
 
+  async softDelete(boardId: string, id: string, deletedAt: Date): Promise<boolean> {
+    // La fecha la decide el dominio (su reloj), nunca now() de SQL (convergencia F2).
+    const result = await this.db
+      .updateTable('task')
+      .set({ deleted_at: deletedAt })
+      .where('id', '=', id)
+      .where('board_id', '=', boardId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst();
+    return result.numUpdatedRows > 0n;
+  }
+
+  async findDeletedById(boardId: string, id: string): Promise<{ task: TaskView; deletedAt: Date } | null> {
+    const row = await this.selectQuery(boardId)
+      .select('task.deleted_at')
+      .where('task.id', '=', id)
+      .where('task.deleted_at', 'is not', null)
+      .executeTakeFirst();
+    return row?.deleted_at ? { task: toView(row), deletedAt: row.deleted_at } : null;
+  }
+
+  async restore(boardId: string, id: string): Promise<TaskView | null> {
+    const result = await this.db
+      .updateTable('task')
+      .set({ deleted_at: null })
+      .where('id', '=', id)
+      .where('board_id', '=', boardId)
+      .where('deleted_at', 'is not', null)
+      .executeTakeFirst();
+    return result.numUpdatedRows > 0n ? this.findById(boardId, id) : null;
+  }
+
+  async purgeDeletedBefore(date: Date): Promise<number> {
+    const result = await this.db
+      .deleteFrom('task')
+      .where('deleted_at', 'is not', null)
+      .where('deleted_at', '<', date)
+      .executeTakeFirst();
+    return Number(result.numDeletedRows);
+  }
+
   private baseQuery(boardId: string) {
+    return this.selectQuery(boardId).where('task.deleted_at', 'is', null);
+  }
+
+  private selectQuery(boardId: string) {
     return this.db
       .selectFrom('task')
       .leftJoin('person', 'person.id', 'task.assignee_id')
@@ -96,12 +141,11 @@ export class KyselyTaskRepository implements TaskRepository {
         'task.updated_at',
         'person.name as assignee_name',
       ])
-      .where('task.board_id', '=', boardId)
-      .where('task.deleted_at', 'is', null);
+      .where('task.board_id', '=', boardId);
   }
 }
 
-type Row = Awaited<ReturnType<ReturnType<KyselyTaskRepository['baseQuery']>['executeTakeFirstOrThrow']>>;
+type Row = Awaited<ReturnType<ReturnType<KyselyTaskRepository['selectQuery']>['executeTakeFirstOrThrow']>>;
 
 const toView = (row: Row): TaskView => ({
   id: row.id,

@@ -1,4 +1,5 @@
 import {
+  DeleteTaskResponseSchema,
   ListTasksResponseSchema,
   TaskSchema,
   type CreateTaskRequest,
@@ -88,3 +89,23 @@ export const useIsTaskSaving = (taskId: string): boolean =>
     filters: { mutationKey: updateTaskKey, status: 'pending' },
     select: (mutation) => (mutation.state.variables as UpdateTaskVariables | undefined)?.id,
   }).includes(taskId);
+
+export const useDeleteTask = () => {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.request(`/v1/tasks/${id}`, { method: 'DELETE', schema: DeleteTaskResponseSchema }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey }),
+  });
+};
+
+export const useRestoreTask = () => {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.request(`/v1/tasks/${id}/restore`, { method: 'POST', schema: TaskSchema }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey }),
+  });
+};

@@ -7,18 +7,23 @@ import { tasksKey, useTask, useUpdateTask } from '../../api/tasks';
 import { errorMessage, es, STATUS_LABELS } from '../../i18n/es';
 import { Dialog } from '../../ui/Dialog';
 import { ErrorAlert } from '../../ui/ErrorAlert';
+import { Button } from '../../ui/Button';
 import { useAnnounce } from '../../ui/LiveRegion';
 import { AssigneeSelect } from './AssigneeSelect';
+import { DeleteTaskConfirm } from './DeleteTaskConfirm';
+import { EditTaskForm } from './EditTaskForm';
 
 const dateFormat = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeStyle: 'short' });
 
 interface TaskDetailDialogProps {
   readonly task: TaskDto | null;
   readonly onClose: () => void;
+  readonly onDeleted: (task: TaskDto) => void;
 }
 
 /** Detalle completo de una tarea (FR-005). */
-export const TaskDetailDialog = ({ task: initial, onClose }: TaskDetailDialogProps) => {
+export const TaskDetailDialog = ({ task: initial, onClose, onDeleted }: TaskDetailDialogProps) => {
+  const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view');
   const query = useTask(initial?.id ?? null, initial ?? undefined);
   const queryClient = useQueryClient();
   const notFound = query.error instanceof ApiError && query.error.code === 'TASK_NOT_FOUND';
@@ -52,11 +57,21 @@ export const TaskDetailDialog = ({ task: initial, onClose }: TaskDetailDialogPro
   };
 
   return (
-    <Dialog open={initial !== null} title={task?.title ?? ''} onClose={onClose}>
+    <Dialog
+      open={initial !== null}
+      title={task?.title ?? ''}
+      onClose={() => {
+        setMode('view');
+        onClose();
+      }}
+    >
       {notFound ? (
         <ErrorAlert message={errorMessage('TASK_NOT_FOUND')} />
       ) : (
-        task && (
+        task &&
+        (mode === 'edit' ? (
+          <EditTaskForm key={task.id} task={task} onDone={() => setMode('view')} />
+        ) : (
           <div className="task-detail">
             <dl className="task-detail__meta">
               <div>
@@ -82,8 +97,25 @@ export const TaskDetailDialog = ({ task: initial, onClose }: TaskDetailDialogPro
             </div>
             <h3 className="task-detail__subheading">{es.detail.description}</h3>
             <p className="task-detail__description">{task.description || es.detail.noDescription}</p>
+            {mode === 'delete' ? (
+              <DeleteTaskConfirm
+                task={task}
+                onCancel={() => setMode('view')}
+                onDeleted={(deleted) => {
+                  setMode('view');
+                  onDeleted(deleted);
+                }}
+              />
+            ) : (
+              <div className="task-detail__actions">
+                <Button onClick={() => setMode('edit')}>{es.edit.edit}</Button>
+                <Button variant="danger" onClick={() => setMode('delete')}>
+                  {es.remove.remove}
+                </Button>
+              </div>
+            )}
           </div>
-        )
+        ))
       )}
     </Dialog>
   );

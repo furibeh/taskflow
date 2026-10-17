@@ -1,10 +1,11 @@
 import { FakeClockForApi } from './fake-clock';
-import { initBoard } from '@taskflow/domain';
+import { initBoard, purgeDeletedTasks } from '@taskflow/domain';
 import type { FastifyInstance } from 'fastify';
 import type { Kysely } from 'kysely';
 import { buildApp } from '../../src/http/app';
 import { createDb, type Database } from '../../src/persistence/db';
 import { KyselyBoardRepository } from '../../src/persistence/repositories/board-repository';
+import { KyselyTaskRepository } from '../../src/persistence/repositories/task-repository';
 import { nodeAccessCodeService, uuidGenerator } from '../../src/security/access-code';
 import { createTestDb, truncateAll } from './test-db';
 
@@ -19,6 +20,8 @@ export interface TestApp {
   reset(): Promise<void>;
   /** Crea otro tablero, lo borra y devuelve su código (que ya no debe funcionar). */
   createSecondBoardAndDeleteIt(): Promise<string>;
+  /** Ejecuta una vez la purga de tareas borradas con el reloj de la prueba. */
+  purge(): Promise<number>;
   close(): Promise<void>;
 }
 
@@ -82,6 +85,7 @@ export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestAp
       await db.deleteFrom('board').where('id', '=', id).execute();
       return code;
     },
+    purge: () => purgeDeletedTasks({ tasks: new KyselyTaskRepository(db), clock }),
     async close() {
       await app.close();
       await db.destroy();

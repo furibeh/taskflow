@@ -70,3 +70,10 @@ export const ListTasksQuerySchema = z.strictObject({
   q: boundedText({ min: 0, max: SEARCH_MAX }).optional(),
 });
 export type ListTasksQuery = z.infer<typeof ListTasksQuerySchema>;
+
+export const DeleteTaskResponseSchema = z.strictObject({
+  id: z.uuid(),
+  /** Límite del servidor (borrado + 15 s); la interfaz ofrece "Deshacer" 10 s. */
+  undoUntil: z.iso.datetime(),
+});
+export type DeleteTaskResponse = z.infer<typeof DeleteTaskResponseSchema>;

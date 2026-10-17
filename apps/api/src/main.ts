@@ -1,7 +1,9 @@
 import { systemClock } from '@taskflow/domain';
 import { loadEnv } from './config/env';
 import { buildApp, loggerOptions } from './http/app';
+import { startPurgeJob } from './jobs/purge-deleted-tasks';
 import { createDb } from './persistence/db';
+import { KyselyTaskRepository } from './persistence/repositories/task-repository';
 
 const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
@@ -16,8 +18,11 @@ const app = await buildApp({
   },
 });
 
+const stopPurge = startPurgeJob({ tasks: new KyselyTaskRepository(db), clock: systemClock }, app.log);
+
 const shutdown = async (signal: string) => {
   app.log.info(`${signal} recibido, cerrando`);
+  stopPurge();
   await app.close();
   await db.destroy();
   process.exit(0);

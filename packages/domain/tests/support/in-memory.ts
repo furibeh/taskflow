@@ -146,13 +146,15 @@ export class InMemoryPeople implements PersonRepository {
 
 export class InMemoryTaskRepository implements TaskRepository {
   private readonly tasks = new Map<string, Task>();
+  private readonly deletedAt = new Map<string, Date>();
 
   constructor(private readonly people: InMemoryPeople) {
     people.attachTasks(this);
   }
 
   countAssignedTo(personId: string): number {
-    return [...this.tasks.values()].filter((t) => t.assigneeId === personId).length;
+    return [...this.tasks.values()].filter((t) => t.assigneeId === personId && !this.deletedAt.has(t.id))
+      .length;
   }
 
   unassign(personId: string): void {
@@ -169,12 +171,12 @@ export class InMemoryTaskRepository implements TaskRepository {
 
   async findById(boardId: string, id: string): Promise<TaskView | null> {
     const task = this.tasks.get(id);
-    return task && task.boardId === boardId ? this.view(task) : null;
+    return task && task.boardId === boardId && !this.deletedAt.has(id) ? this.view(task) : null;
   }
 
   async list(boardId: string, criteria: TaskCriteria): Promise<TaskView[]> {
     return [...this.tasks.values()]
-      .filter((t) => t.boardId === boardId)
+      .filter((t) => t.boardId === boardId && !this.deletedAt.has(t.id))
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .map((t) => this.view(t))
       .filter((t) => matchesCriteria(t, criteria));
@@ -182,9 +184,39 @@ export class InMemoryTaskRepository implements TaskRepository {
 
   async update(task: Task): Promise<TaskView | null> {
     const current = this.tasks.get(task.id);
-    if (!current || current.boardId !== task.boardId) return null;
+    if (!current || current.boardId !== task.boardId || this.deletedAt.has(task.id)) return null;
     this.tasks.set(task.id, { ...task });
     return this.view(task);
+  }
+
+  async softDelete(boardId: string, id: string, deletedAt: Date): Promise<boolean> {
+    if (!(await this.findById(boardId, id))) return false;
+    this.deletedAt.set(id, deletedAt);
+    return true;
+  }
+
+  async findDeletedById(boardId: string, id: string): Promise<{ task: TaskView; deletedAt: Date } | null> {
+    const task = this.tasks.get(id);
+    const deletedAt = this.deletedAt.get(id);
+    return task && deletedAt && task.boardId === boardId ? { task: this.view(task), deletedAt } : null;
+  }
+
+  async restore(boardId: string, id: string): Promise<TaskView | null> {
+    if (!(await this.findDeletedById(boardId, id))) return null;
+    this.deletedAt.delete(id);
+    return this.findById(boardId, id);
+  }
+
+  async purgeDeletedBefore(date: Date): Promise<number> {
+    let purged = 0;
+    for (const [id, deletedAt] of this.deletedAt) {
+      if (deletedAt < date) {
+        this.deletedAt.delete(id);
+        this.tasks.delete(id);
+        purged += 1;
+      }
+    }
+    return purged;
   }
 
   count(): number {
