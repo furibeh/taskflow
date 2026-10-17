@@ -21,6 +21,14 @@ export const setAccessCode = (code: string): void => {
   window.history.replaceState(window.history.state, '', url);
 };
 
+/** Olvida el código y lo quita del fragmento (p. ej., tras borrar el tablero). */
+export const clearAccessCode = (): void => {
+  accessCode = null;
+  const url = new URL(window.location.href);
+  url.hash = '';
+  window.history.replaceState(window.history.state, '', url);
+};
+
 /** Vuelve a leer el código del fragmento (p. ej., tras pegar un enlace en la misma pestaña). */
 export const reloadAccessCodeFromHash = (): string | null => {
   accessCode = readFromHash();

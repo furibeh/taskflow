@@ -26,6 +26,8 @@ export interface RequestOptions<T> {
   readonly body?: unknown;
   readonly query?: Readonly<Record<string, QueryValue>>;
   readonly schema: ZodType<T>;
+  /** false en las rutas públicas: nunca se envía el código de acceso (plan D16). */
+  readonly auth?: false;
 }
 
 export interface ApiClientConfig {
@@ -69,7 +71,7 @@ export const createApiClient = (config: ApiClientConfig): ApiClient => {
   return {
     async request<T>(path: string, options: RequestOptions<T>): Promise<T> {
       const headers = new Headers({ accept: 'application/json' });
-      const code = config.getAccessCode();
+      const code = options.auth === false ? null : config.getAccessCode();
       if (code) headers.set('authorization', `Bearer ${code}`);
       if (options.body !== undefined) headers.set('content-type', 'application/json');
 
@@ -91,7 +93,7 @@ export const createApiClient = (config: ApiClientConfig): ApiClient => {
 
       if (!response.ok) {
         const error = await parseProblem(response);
-        if (error.code === 'INVALID_LINK') config.onInvalidLink?.();
+        if (error.code === 'INVALID_LINK' && options.auth !== false) config.onInvalidLink?.();
         throw error;
       }
 

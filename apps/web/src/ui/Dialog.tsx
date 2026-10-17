@@ -10,8 +10,9 @@ interface DialogProps {
 }
 
 /**
- * Diálogo modal nativo: el navegador atrapa el foco, Escape lo cierra y el foco vuelve al
- * elemento que lo abrió.
+ * Diálogo modal nativo: el navegador atrapa el foco y el foco vuelve al elemento que lo abrió.
+ * Escape no lo cierra por sí solo: llama a `onClose`, que decide (p. ej., pedir confirmación
+ * antes de cerrar el aviso de un enlace nuevo, FR-103a).
  */
 export const Dialog = ({ open, title, onClose, children }: DialogProps) => {
   const ref = useRef<HTMLDialogElement>(null);
@@ -25,7 +26,16 @@ export const Dialog = ({ open, title, onClose, children }: DialogProps) => {
   }, [open]);
 
   return (
-    <dialog ref={ref} className="dialog" aria-labelledby={titleId} onClose={onClose}>
+    <dialog
+      ref={ref}
+      className="dialog"
+      aria-labelledby={titleId}
+      onClose={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
       <div className="dialog__header">
         <h2 id={titleId} className="dialog__title">
           {title}
