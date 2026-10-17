@@ -70,7 +70,7 @@ describe('tablero y creación de tareas (US1)', () => {
 
     release();
     await waitFor(() =>
-      expect(within(column('Pendiente')).getByRole('button', { name: /Preparar demo/ })).toBeInTheDocument(),
+      expect(within(column('Pendiente')).getByRole('button', { name: 'Preparar demo' })).toBeInTheDocument(),
     );
     expect(within(column('Pendiente')).getByText('1 tarea')).toBeInTheDocument();
     expect(screen.getByLabelText('Título')).toHaveValue('');
@@ -115,7 +115,7 @@ describe('tablero y creación de tareas (US1)', () => {
     server.addTask({ title: 'Preparar demo', description: 'Slides\ny datos', status: 'in_progress' });
     renderApp(server);
 
-    await user.click(await screen.findByRole('button', { name: /Preparar demo/ }));
+    await user.click(await screen.findByRole('button', { name: 'Preparar demo' }));
 
     const dialog = await screen.findByRole('dialog', { name: 'Preparar demo' });
     expect(within(dialog).getByText(/Slides/)).toBeInTheDocument();

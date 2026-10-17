@@ -14,4 +14,6 @@ export interface TaskRepository {
   findById(boardId: string, id: string): Promise<TaskView | null>;
   /** Tareas no borradas del tablero, de la más reciente a la más antigua (FR-004). */
   list(boardId: string, criteria: TaskCriteria): Promise<TaskView[]>;
+  /** Guarda los campos modificables de una tarea no borrada; null si ya no existe. */
+  update(task: Task): Promise<TaskView | null>;
 }

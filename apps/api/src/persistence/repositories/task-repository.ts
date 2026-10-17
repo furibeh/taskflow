@@ -46,6 +46,24 @@ export class KyselyTaskRepository implements TaskRepository {
     return rows.map(toView);
   }
 
+  async update(task: Task): Promise<TaskView | null> {
+    const result = await this.db
+      .updateTable('task')
+      .set({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        assignee_id: task.assigneeId,
+        updated_at: task.updatedAt,
+      })
+      .where('id', '=', task.id)
+      .where('board_id', '=', task.boardId)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst();
+    if (result.numUpdatedRows === 0n) return null;
+    return this.findById(task.boardId, task.id);
+  }
+
   private baseQuery(boardId: string) {
     return this.db
       .selectFrom('task')

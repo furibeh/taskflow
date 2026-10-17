@@ -106,3 +106,69 @@
   background: var(--color-primary);
   color: var(--color-on-primary);
 }
+
+.column--drop-target {
+  outline: 3px dashed var(--color-primary);
+  outline-offset: -3px;
+}
+.card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.card__top .card__title {
+  flex: 1;
+}
+.card__handle {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap-size);
+  height: var(--tap-size);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: grab;
+}
+.card__handle[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.card--dragging {
+  opacity: 0.4;
+}
+.card--picked {
+  outline: 3px solid var(--color-primary);
+}
+.card--overlay {
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+  cursor: grabbing;
+}
+.card__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+}
+.card__status-label {
+  color: var(--color-text-muted);
+}
+.card__select {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-size);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+.card__saving {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}

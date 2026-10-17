@@ -59,6 +59,19 @@ export const es = {
     titleRequired: 'El título es obligatorio.',
     tooLong: (max: number) => `Máximo ${max} caracteres.`,
   },
+  move: {
+    statusLabel: 'Estado',
+    statusOf: (title: string) => `de «${title}»`,
+    moved: (column: string) => `Tarea movida a ${column}`,
+    handle: (title: string) => `Mover «${title}»`,
+    instructions:
+      'Pulsa Espacio para coger la tarea, las flechas izquierda y derecha para elegir columna y Espacio para soltarla. Escape cancela.',
+    pickedUp: (column: string) => `Tarea cogida. Columna actual: ${column}.`,
+    over: (column: string) => `Sobre ${column}`,
+    dropped: (column: string) => `Tarea soltada en ${column}`,
+    droppedUnchanged: 'Tarea soltada sin cambios',
+    cancelled: 'Movimiento cancelado',
+  },
   detail: {
     status: 'Estado',
     assignee: 'Responsable',

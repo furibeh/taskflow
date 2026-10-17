@@ -4,9 +4,18 @@ import {
   ProblemSchema,
   TaskIdParamsSchema,
   TaskSchema,
+  UpdateTaskRequestSchema,
   type TaskDto,
 } from '@taskflow/contracts';
-import { createTask, getTask, listTasks, type TaskDeps, type TaskView } from '@taskflow/domain';
+import {
+  createTask,
+  getTask,
+  listTasks,
+  updateTask,
+  type TaskDeps,
+  type TaskView,
+  type UpdateTaskInput,
+} from '@taskflow/domain';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { currentBoard } from '../plugins/auth';
 import { DomainFailure } from '../problem';
@@ -57,6 +66,26 @@ export const taskRoutes: FastifyPluginAsyncZod<{ deps: TaskDeps }> = async (app,
     { schema: { params: TaskIdParamsSchema, response: { 200: TaskSchema } } },
     async (request) => {
       const result = await getTask(deps, currentBoard(request).id, request.params.taskId);
+      if (!result.ok) throw new DomainFailure(result.error);
+      return toTaskDto(result.value);
+    },
+  );
+
+  app.patch(
+    '/tasks/:taskId',
+    {
+      schema: {
+        params: TaskIdParamsSchema,
+        body: UpdateTaskRequestSchema,
+        response: { 200: TaskSchema, '4xx': ProblemSchema },
+      },
+    },
+    async (request) => {
+      // Solo se pasan al dominio los campos presentes (exactOptionalPropertyTypes).
+      const input = Object.fromEntries(
+        Object.entries(request.body).filter(([, value]) => value !== undefined),
+      ) as UpdateTaskInput;
+      const result = await updateTask(deps, currentBoard(request).id, request.params.taskId, input);
       if (!result.ok) throw new DomainFailure(result.error);
       return toTaskDto(result.value);
     },

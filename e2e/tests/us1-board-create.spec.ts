@@ -21,16 +21,16 @@ test('US1: tablero vacío, crear tarea, persistencia y detalle', async ({ page }
   await page.getByRole('button', { name: 'Crear tarea' }).click();
 
   await showColumn(page, 'Pendiente');
-  const card = columnRegion(page, 'Pendiente').getByRole('button', { name: /Preparar demo/ });
+  const card = columnRegion(page, 'Pendiente').getByRole('button', { name: 'Preparar demo', exact: true });
   await expect(card).toBeVisible();
   await expect(page.getByLabel('Título')).toHaveValue('');
 
   await page.reload();
   await showColumn(page, 'Pendiente');
-  await expect(columnRegion(page, 'Pendiente').getByRole('button', { name: /Preparar demo/ })).toBeVisible();
+  await expect(columnRegion(page, 'Pendiente').getByRole('button', { name: 'Preparar demo', exact: true })).toBeVisible();
 
-  await columnRegion(page, 'Pendiente').getByRole('button', { name: /Preparar demo/ }).click();
-  const dialog = page.getByRole('dialog', { name: 'Preparar demo' });
+  await columnRegion(page, 'Pendiente').getByRole('button', { name: 'Preparar demo', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Preparar demo', exact: true });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('Slides y datos de ejemplo')).toBeVisible();
   await expect(dialog.getByText('Pendiente')).toBeVisible();

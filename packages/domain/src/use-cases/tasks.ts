@@ -6,6 +6,7 @@ import {
   parseTaskDescription,
   parseTaskTitle,
   TASK_STATUSES,
+  type Task,
   type TaskStatus,
   type TaskView,
 } from '../tasks/task';
@@ -101,4 +102,69 @@ export const getTask = async (
 ): Promise<Result<TaskView, DomainError>> => {
   const task = await deps.tasks.findById(boardId, id);
   return task ? ok(task) : err({ code: 'TASK_NOT_FOUND' });
+};
+
+export interface UpdateTaskInput {
+  readonly title?: string;
+  readonly description?: string;
+  readonly status?: TaskStatus;
+  readonly assigneeId?: string | null;
+}
+
+const isTaskStatus = (value: unknown): value is TaskStatus =>
+  (TASK_STATUSES as readonly unknown[]).includes(value);
+
+/**
+ * Modifica una tarea (FR-013, FR-014, FR-018). Se permite cualquier transición de estado, con o
+ * sin responsable; si nada cambia no se escribe ni se actualiza updatedAt. Gana el último
+ * guardado (R11).
+ */
+export const updateTask = async (
+  deps: TaskDeps,
+  boardId: string,
+  id: string,
+  input: UpdateTaskInput,
+): Promise<Result<TaskView, DomainError>> => {
+  const issues: ValidationIssue[] = [];
+  const title = input.title === undefined ? undefined : parseTaskTitle(input.title);
+  const description =
+    input.description === undefined ? undefined : parseTaskDescription(input.description);
+  if (title && !title.ok) issues.push(title.error);
+  if (description && !description.ok) issues.push(description.error);
+  if (input.status !== undefined && !isTaskStatus(input.status)) {
+    issues.push({ field: 'status', rule: 'invalid_value' });
+  }
+  if (issues.length > 0) return err(validationError(...issues));
+
+  const current = await deps.tasks.findById(boardId, id);
+  if (!current) return err({ code: 'TASK_NOT_FOUND' });
+
+  if (
+    input.assigneeId !== undefined &&
+    input.assigneeId !== null &&
+    input.assigneeId !== current.assigneeId &&
+    !(await deps.people.existsInBoard(boardId, input.assigneeId))
+  ) {
+    return err({ code: 'ASSIGNEE_NOT_FOUND' });
+  }
+
+  const next: Task = {
+    id: current.id,
+    boardId: current.boardId,
+    title: title?.ok ? title.value : current.title,
+    description: description?.ok ? description.value : current.description,
+    status: input.status ?? current.status,
+    assigneeId: input.assigneeId === undefined ? current.assigneeId : input.assigneeId,
+    createdAt: current.createdAt,
+    updatedAt: current.updatedAt,
+  };
+  const changed =
+    next.title !== current.title ||
+    next.description !== current.description ||
+    next.status !== current.status ||
+    next.assigneeId !== current.assigneeId;
+  if (!changed) return ok(current);
+
+  const updated = await deps.tasks.update({ ...next, updatedAt: deps.clock.now() });
+  return updated ? ok(updated) : err({ code: 'TASK_NOT_FOUND' });
 };
