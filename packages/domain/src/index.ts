@@ -8,5 +8,7 @@ export * from './board/board';
 export * from './tasks/task';
 export * from './tasks/task-repository';
 export * from './people/person-lookup';
+export * from './people/person';
 export * from './use-cases/board';
 export * from './use-cases/tasks';
+export * from './use-cases/people';

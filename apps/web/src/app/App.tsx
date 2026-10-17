@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { ApiProvider } from '../api/ApiContext';
 import { createApiClient, type ApiClient } from '../api/client';
 import { InvalidLinkPage } from '../features/access/InvalidLinkPage';
+import { PeopleDialog } from '../features/people/PeopleDialog';
 import { es } from '../i18n/es';
+import { Button } from '../ui/Button';
 import { LiveRegionProvider } from '../ui/LiveRegion';
 import { getAccessCode } from './access-code';
 import { BoardPage } from './BoardPage';
@@ -15,6 +17,7 @@ interface AppProps {
 }
 
 export const App = ({ apiClient }: AppProps) => {
+  const [peopleOpen, setPeopleOpen] = useState(false);
   const [invalidLink, setInvalidLink] = useState(() => !apiClient && getAccessCode() === null);
   const [queryClient] = useState(createQueryClient);
   const [client] = useState(
@@ -29,7 +32,11 @@ export const App = ({ apiClient }: AppProps) => {
         <LiveRegionProvider>
           <header className="app-header">
             <h1 className="app-header__title">{es.appName}</h1>
+            <nav className="app-header__actions" aria-label="Acciones del tablero">
+              <Button onClick={() => setPeopleOpen(true)}>{es.people.open}</Button>
+            </nav>
           </header>
+          <PeopleDialog open={peopleOpen} onClose={() => setPeopleOpen(false)} />
           <BoardPage />
         </LiveRegionProvider>
       </ApiProvider>

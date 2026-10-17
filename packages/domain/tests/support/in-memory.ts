@@ -1,7 +1,7 @@
 import type { AccessCodeService, Board, BoardRepository } from '../../src/board/board';
 import type { Clock } from '../../src/shared/clock';
 import type { IdGenerator } from '../../src/shared/ids';
-import type { PersonLookup } from '../../src/people/person-lookup';
+import { personNameKey, type Person, type PersonRepository, type PersonWithCount } from '../../src/people/person';
 import type { Task, TaskStatus, TaskView } from '../../src/tasks/task';
 import type { TaskCriteria, TaskRepository } from '../../src/tasks/task-repository';
 
@@ -84,13 +84,20 @@ export class InMemoryBoardRepository implements BoardRepository {
 
 // --- Tareas y personas (US1) ---------------------------------------------------------------
 
-export class InMemoryPeople implements PersonLookup {
-  private readonly people = new Map<string, { boardId: string; name: string }>();
+export class InMemoryPeople implements PersonRepository {
+  private readonly people = new Map<string, Person>();
+  private tasks: InMemoryTaskRepository | null = null;
   private next = 1;
 
+  /** El repositorio de tareas se registra para contar y desasignar (ON DELETE SET NULL). */
+  attachTasks(tasks: InMemoryTaskRepository): void {
+    this.tasks = tasks;
+  }
+
+  /** Atajo de prueba: añade una persona y devuelve su id. */
   add(boardId: string, name: string): string {
     const id = `c0000000-0000-4000-8000-${String(this.next++).padStart(12, '0')}`;
-    this.people.set(id, { boardId, name });
+    this.people.set(id, { id, boardId, name, createdAt: new Date(0) });
     return id;
   }
 
@@ -101,12 +108,57 @@ export class InMemoryPeople implements PersonLookup {
   nameOf(personId: string): string | undefined {
     return this.people.get(personId)?.name;
   }
+
+  async insert(person: Person): Promise<'inserted' | 'id_taken' | 'name_taken'> {
+    if (this.people.has(person.id)) return 'id_taken';
+    if (await this.findByNameKey(person.boardId, personNameKey(person.name))) return 'name_taken';
+    this.people.set(person.id, person);
+    return 'inserted';
+  }
+
+  async findById(boardId: string, id: string): Promise<Person | null> {
+    const person = this.people.get(id);
+    return person && person.boardId === boardId ? person : null;
+  }
+
+  async findByNameKey(boardId: string, key: string): Promise<Person | null> {
+    return (
+      [...this.people.values()].find((p) => p.boardId === boardId && personNameKey(p.name) === key) ?? null
+    );
+  }
+
+  async listWithAssignedCount(boardId: string): Promise<PersonWithCount[]> {
+    return [...this.people.values()]
+      .filter((p) => p.boardId === boardId)
+      .sort((a, b) => personNameKey(a.name).localeCompare(personNameKey(b.name)))
+      .map((p) => ({ ...p, assignedTaskCount: this.tasks?.countAssignedTo(p.id) ?? 0 }));
+  }
+
+  async delete(boardId: string, id: string): Promise<{ unassignedTaskCount: number } | null> {
+    if (!(await this.findById(boardId, id))) return null;
+    const unassignedTaskCount = this.tasks?.countAssignedTo(id) ?? 0;
+    this.tasks?.unassign(id);
+    this.people.delete(id);
+    return { unassignedTaskCount };
+  }
 }
 
 export class InMemoryTaskRepository implements TaskRepository {
   private readonly tasks = new Map<string, Task>();
 
-  constructor(private readonly people: InMemoryPeople) {}
+  constructor(private readonly people: InMemoryPeople) {
+    people.attachTasks(this);
+  }
+
+  countAssignedTo(personId: string): number {
+    return [...this.tasks.values()].filter((t) => t.assigneeId === personId).length;
+  }
+
+  unassign(personId: string): void {
+    for (const [id, task] of this.tasks) {
+      if (task.assigneeId === personId) this.tasks.set(id, { ...task, assigneeId: null });
+    }
+  }
 
   async insert(task: Task): Promise<'inserted' | 'id_taken'> {
     if (this.tasks.has(task.id)) return 'id_taken';
