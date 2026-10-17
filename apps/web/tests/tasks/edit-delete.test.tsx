@@ -93,6 +93,7 @@ describe('editar, borrar y deshacer (US5)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Borrar' }));
     await user.click(within(dialog).getByRole('button', { name: 'Borrar tarea' }));
     expect(await screen.findByText('Tarea borrada')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Deshacer' })).not.toHaveFocus();
 
     await act(async () => {
       vi.advanceTimersByTime(10_100);
@@ -112,7 +113,7 @@ describe('editar, borrar y deshacer (US5)', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Borrar' }));
     await user.click(within(dialog).getByRole('button', { name: 'Borrar tarea' }));
     const undo = await screen.findByRole('button', { name: 'Deshacer' });
-    undo.focus();
+    act(() => undo.focus());
 
     await act(async () => {
       vi.advanceTimersByTime(10_100);
@@ -139,5 +140,22 @@ describe('editar, borrar y deshacer (US5)', () => {
     server.expireRestores();
     await user.click(await screen.findByRole('button', { name: 'Deshacer' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Ya no se puede deshacer.');
+  });
+});
+
+describe('borrado con el teclado', () => {
+  it('confirmar con Enter lleva el foco a "Deshacer"', async () => {
+    const user = userEvent.setup();
+    const server = createFakeServer();
+    server.addTask({ title: 'Preparar demo' });
+    renderApp(server);
+
+    await user.click(await screen.findByRole('button', { name: 'Preparar demo' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Preparar demo' });
+    await user.click(within(dialog).getByRole('button', { name: 'Borrar' }));
+    within(dialog).getByRole('button', { name: 'Borrar tarea' }).focus();
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Deshacer' })).toHaveFocus());
   });
 });

@@ -1,7 +1,8 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   readonly variant?: 'primary' | 'secondary' | 'danger';
+  readonly ref?: Ref<HTMLButtonElement>;
 }
 
 /** Botón con área táctil mínima de 44×44 px (FR-033) y foco visible. */

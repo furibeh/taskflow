@@ -59,6 +59,21 @@ export const es = {
     titleRequired: 'El título es obligatorio.',
     tooLong: (max: number) => `Máximo ${max} caracteres.`,
   },
+  share: {
+    open: 'Compartir',
+    title: 'Compartir el tablero',
+    intro: 'Cualquier persona con este enlace puede ver y modificar el tablero. Compártelo solo con tu equipo.',
+    link: 'Enlace del tablero',
+    copy: 'Copiar enlace',
+    copied: 'Enlace copiado',
+    copyFailed: 'No se pudo copiar. Selecciona el enlace y cópialo manualmente.',
+    regenerate: 'Regenerar enlace',
+    regenerateWarning:
+      'El enlace actual dejará de funcionar inmediatamente para todo el equipo. Tendrás que compartir el nuevo.',
+    confirmRegenerate: 'Regenerar',
+    cancel: 'Cancelar',
+    regenerated: 'Enlace regenerado. Comparte el nuevo enlace con tu equipo.',
+  },
   people: {
     open: 'Personas',
     title: 'Personas del equipo',

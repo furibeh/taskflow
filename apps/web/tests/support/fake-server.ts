@@ -44,6 +44,9 @@ export const createFakeServer = () => {
       if (failure) return failure();
     }
 
+    if (url.pathname === '/api/v1/board/access-code/regenerate' && method === 'POST') {
+      return json(200, { accessCode: 'N'.repeat(43), rotatedAt: new Date(clock).toISOString() });
+    }
     if (url.pathname === '/api/v1/people' && method === 'GET') {
       const items = [...people].sort((x, y) => x.name.localeCompare(y.name, 'es')).map(withCount);
       return json(200, { items });
@@ -180,6 +183,10 @@ export const createFakeServer = () => {
     /** Las restauraciones responden 410 UNDO_EXPIRED. */
     expireRestores() {
       restoreExpired = true;
+    },
+    /** La siguiente escritura responde con un problem+json del estado y código indicados. */
+    failNextWith(status: number, code: string) {
+      failures.push(() => problem(status, code));
     },
     /** La siguiente escritura falla con un error de red. */
     failNextWithNetworkError() {

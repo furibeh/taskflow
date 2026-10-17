@@ -1,8 +1,9 @@
 import { FakeClockForApi } from './fake-clock';
 import { initBoard, purgeDeletedTasks } from '@taskflow/domain';
 import type { FastifyInstance } from 'fastify';
+import { Writable } from 'node:stream';
 import type { Kysely } from 'kysely';
-import { buildApp } from '../../src/http/app';
+import { buildApp, loggerOptions } from '../../src/http/app';
 import { createDb, type Database } from '../../src/persistence/db';
 import { KyselyBoardRepository } from '../../src/persistence/repositories/board-repository';
 import { KyselyTaskRepository } from '../../src/persistence/repositories/task-repository';
@@ -15,6 +16,8 @@ export interface TestApp {
   readonly clock: FakeClockForApi;
   readonly boardId: string;
   readonly accessCode: string;
+  /** Líneas de log capturadas (solo con captureLogs). */
+  readonly logs: string[];
   authHeader(): { authorization: string };
   /** Vacía la base de datos y crea un tablero nuevo con su código. */
   reset(): Promise<void>;
@@ -30,6 +33,8 @@ export interface TestAppOptions {
   readonly clock?: FakeClockForApi;
   /** Usa una base de datos inalcanzable para provocar errores de infraestructura. */
   readonly brokenDatabase?: boolean;
+  /** Captura los logs (con la misma configuración de redacción que producción). */
+  readonly captureLogs?: boolean;
 }
 
 export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestApp> => {
@@ -37,7 +42,15 @@ export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestAp
   const db = options.brokenDatabase
     ? createDb('postgres://nadie:nada@127.0.0.1:1/inexistente')
     : createTestDb();
-  const app = await buildApp({ db, clock, rateLimits: null });
+  const logs: string[] = [];
+  const stream = new Writable({
+    write(chunk: Buffer, _encoding, done) {
+      logs.push(chunk.toString());
+      done();
+    },
+  });
+  const logger = options.captureLogs ? { ...(loggerOptions('info') as object), stream } : false;
+  const app = await buildApp({ db, clock, rateLimits: null, logger });
   await app.ready();
 
   const boards = new KyselyBoardRepository(db);
@@ -58,6 +71,7 @@ export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestAp
     app,
     db,
     clock,
+    logs,
     get boardId() {
       return state.boardId;
     },

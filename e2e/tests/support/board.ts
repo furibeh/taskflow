@@ -33,6 +33,8 @@ export const expectNoA11yViolations = async (page: Page): Promise<void> => {
 
 /** En móvil las columnas son pestañas: selecciona la columna antes de buscar en ella. */
 export const showColumn = async (page: Page, name: string): Promise<void> => {
+  // Espera a que el tablero esté cargado: isVisible() no espera y daría un falso "no hay pestañas".
+  await page.getByRole('region', { name: 'Tablero de tareas' }).waitFor();
   const tab = page.getByRole('tab', { name: new RegExp(`^${name}`) });
   if (await tab.isVisible()) await tab.click();
 };

@@ -1,5 +1,5 @@
 import type { TaskDto } from '@taskflow/contracts';
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { ApiError } from '../../api/client';
 import { useDeleteTask } from '../../api/tasks';
 import { errorMessage, es } from '../../i18n/es';
@@ -9,7 +9,8 @@ import { ErrorAlert } from '../../ui/ErrorAlert';
 interface DeleteTaskConfirmProps {
   readonly task: TaskDto;
   readonly onCancel: () => void;
-  readonly onDeleted: (task: TaskDto) => void;
+  /** viaKeyboard: la confirmación se hizo con el teclado (para decidir adónde va el foco). */
+  readonly onDeleted: (task: TaskDto, viaKeyboard: boolean) => void;
 }
 
 /** Confirmación explícita con el título de la tarea antes de borrar (FR-013a). */
@@ -17,10 +18,12 @@ export const DeleteTaskConfirm = ({ task, onCancel, onDeleted }: DeleteTaskConfi
   const remove = useDeleteTask();
   const [failure, setFailure] = useState<string | null>(null);
 
-  const confirm = () => {
+  const confirm = (event?: MouseEvent) => {
+    // Un "click" generado con Enter o Espacio tiene detail === 0.
+    const viaKeyboard = event?.detail === 0;
     setFailure(null);
     remove.mutate(task.id, {
-      onSuccess: () => onDeleted(task),
+      onSuccess: () => onDeleted(task, viaKeyboard),
       onError: (error) => setFailure(errorMessage(error instanceof ApiError ? error.code : 'INTERNAL_ERROR')),
     });
   };
@@ -28,7 +31,7 @@ export const DeleteTaskConfirm = ({ task, onCancel, onDeleted }: DeleteTaskConfi
   return (
     <div className="task-detail__confirm" role="group" aria-label={es.remove.confirm(task.title)}>
       <p className="task-detail__warning">{es.remove.confirm(task.title)}</p>
-      {failure && <ErrorAlert message={failure} onRetry={confirm} retryDisabled={remove.isPending} />}
+      {failure && <ErrorAlert message={failure} onRetry={() => confirm()} retryDisabled={remove.isPending} />}
       <div className="task-detail__actions">
         <Button variant="danger" onClick={confirm} disabled={remove.isPending}>
           {remove.isPending ? es.saving : es.remove.confirmButton}

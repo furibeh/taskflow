@@ -1,0 +1,11 @@
+.share {
+  display: grid;
+  gap: var(--space-3);
+}
+.share__intro {
+  margin: 0;
+}
+.share__link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+}
