@@ -11,6 +11,7 @@
     "db:migrate": "tsx src/cli/migrate.ts up",
     "db:migrate:down": "tsx src/cli/migrate.ts down",
     "board:init": "tsx src/cli/board-init.ts",
+    "board:create": "tsx src/cli/board-create.ts",
     "board:rotate": "tsx src/cli/board-rotate.ts"
   },
   "dependencies": {
