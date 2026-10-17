@@ -459,3 +459,5 @@ Task: "T090 People schemas in packages/contracts/src/people.ts"
 
 - [X] T147 [US2] Regression test (must fail before T148): after pressing the pointer on the status select and changing the status, moving the pointer does not start a drag of the card, in `apps/web/tests/board/drag-and-drop.test.tsx` per spec edge case "Controles dentro de la tarjeta" (#11)
 - [X] T148 [US2] Stop `pointerdown`/`touchstart` propagation from the status select so the card's dnd-kit listeners never arm a drag from it, in `apps/web/src/features/tasks/StatusSelect.tsx` per spec edge case "Controles dentro de la tarjeta" (#11)
+- [X] T149 Regression test (must fail before T150): unmounting `LiveRegionProvider` with an announcement pending leaves no timer scheduled, in `apps/web/tests/ui/live-region.test.tsx` per FR-031 (#13)
+- [X] T150 Track pending announcement timers in `LiveRegionProvider` and clear them on unmount so no state update runs after teardown, in `apps/web/src/ui/LiveRegion.tsx` per FR-031 (#13)
