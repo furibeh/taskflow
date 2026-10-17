@@ -1,0 +1,664 @@
+openapi: 3.1.0
+info:
+  title: TaskFlow API
+  version: 1.1.0
+  description: |
+    API REST de TaskFlow (tableros kanban compartidos sin inicio de sesión, uno por equipo).
+    Versión 1.1.0: feature `002-multiple-boards` (varios tableros, nombre, borrado).
+
+    **Acceso**: las rutas bajo `/api/v1` requieren `Authorization: Bearer <código>`, donde
+    `<código>` es el código de acceso del enlace secreto de **un** tablero (FR-028a, FR-108),
+    salvo `GET /v1/public-config` y `POST /v1/boards`, que son públicas (`security: []`). Un
+    código ausente, incorrecto, regenerado o de un tablero borrado devuelve siempre el mismo
+    `401 INVALID_LINK` (FR-028c, FR-116).
+
+    **Escrituras**: la interfaz solo refleja un cambio tras recibir la respuesta (FR-021).
+    Las creaciones usan un `id` generado por el cliente para que los reintentos sean
+    idempotentes (FR-011).
+
+    **Errores**: `application/problem+json` (RFC 9457) con `code` estable.
+servers:
+  - url: /api
+security:
+  - boardAccessCode: []
+
+paths:
+  /health:
+    get:
+      summary: Estado del servicio (sin autenticación)
+      security: []
+      operationId: getHealth
+      responses:
+        "200":
+          description: Servicio y base de datos disponibles
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /v1/public-config:
+    get:
+      summary: Configuración pública para la pantalla de inicio (sin autenticación, FR-106)
+      security: []
+      operationId: getPublicConfig
+      responses:
+        "200":
+          description: Configuración de la instalación; no revela datos de ningún tablero
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [boardCreationEnabled]
+                additionalProperties: false
+                properties:
+                  boardCreationEnabled: { type: boolean }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/boards:
+    post:
+      summary: Crea un tablero (sin autenticación, FR-102–FR-105)
+      description: |
+        El cliente genera el `id`; el servidor genera el código de acceso, guarda solo su
+        SHA-256 y lo devuelve **únicamente** en la respuesta `201` (research R19). Una
+        repetición con el mismo `id` y nombre devuelve `200` con el tablero **sin código**
+        (el tablero se creó pero su enlace ya no se puede mostrar, FR-104); con otro nombre,
+        `409 ID_CONFLICT`. Limitado a `BOARD_CREATION_PER_HOUR` creaciones nuevas por IP y
+        hora.
+      security: []
+      operationId: createBoard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateBoardRequest" }
+      responses:
+        "201":
+          description: Tablero creado. El código solo se devuelve en esta respuesta.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedBoardWithCode" }
+        "200":
+          description: Repetición de un tablero ya creado; sin código
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedBoard" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "403":
+          description: "`BOARD_CREATION_DISABLED`: la creación web está desactivada"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "409": { $ref: "#/components/responses/IdConflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "429":
+          description: "`BOARD_CREATION_LIMITED` (límite de creaciones por hora) o `RATE_LIMITED`"
+          headers:
+            Retry-After:
+              schema: { type: integer }
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+
+  /v1/board:
+    get:
+      summary: Comprueba el código de acceso y devuelve los datos del tablero
+      operationId: getBoard
+      responses:
+        "200":
+          description: Código válido
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Board" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    patch:
+      summary: Cambia el nombre del tablero (FR-114)
+      operationId: renameBoard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RenameBoardRequest" }
+      responses:
+        "200":
+          description: Nombre cambiado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Board" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    delete:
+      summary: Borra el tablero con todas sus tareas y personas, de forma definitiva (FR-115, FR-116)
+      description: |
+        Sin deshacer. A partir de la respuesta, cualquier petición con el código del tablero
+        recibe `401 INVALID_LINK`. La confirmación con el nombre escrito es de la interfaz.
+      operationId: deleteBoard
+      responses:
+        "204":
+          description: Tablero borrado
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/board/access-code/regenerate:
+    post:
+      summary: Regenera el enlace secreto e invalida el anterior (FR-028b)
+      operationId: regenerateAccessCode
+      responses:
+        "200":
+          description: Nuevo código. Solo se devuelve en esta respuesta.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [accessCode, rotatedAt]
+                additionalProperties: false
+                properties:
+                  accessCode: { type: string, pattern: "^[A-Za-z0-9_-]{43}$" }
+                  rotatedAt: { type: string, format: date-time }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/tasks:
+    get:
+      summary: Lista las tareas visibles, filtradas y ordenadas por creación descendente
+      operationId: listTasks
+      parameters:
+        - name: assignee
+          in: query
+          description: "UUID de una persona, o `unassigned`. Omitido = todos (FR-022)."
+          schema:
+            oneOf:
+              - { type: string, format: uuid }
+              - { type: string, const: unassigned }
+        - name: status
+          in: query
+          description: Uno o varios estados (repetir el parámetro). Omitido = todos (FR-023).
+          style: form
+          explode: true
+          schema:
+            type: array
+            uniqueItems: true
+            items: { $ref: "#/components/schemas/TaskStatus" }
+        - name: q
+          in: query
+          description: |
+            Texto literal buscado en título y descripción, sin distinguir mayúsculas ni
+            tildes. Se recortan espacios; vacío = sin filtro (FR-024a, FR-024b).
+          schema: { type: string, maxLength: 100 }
+      responses:
+        "200":
+          description: Tareas que cumplen todos los criterios (AND, FR-024)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, counts]
+                additionalProperties: false
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Task" }
+                  counts:
+                    description: Número de tareas visibles por columna (FR-003)
+                    type: object
+                    required: [pending, in_progress, done]
+                    additionalProperties: false
+                    properties:
+                      pending: { type: integer, minimum: 0 }
+                      in_progress: { type: integer, minimum: 0 }
+                      done: { type: integer, minimum: 0 }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      summary: Crea una tarea en estado Pendiente (FR-007, FR-008)
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateTaskRequest" }
+      responses:
+        "201":
+          description: Tarea creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "200":
+          description: Repetición idempotente; la tarea con ese `id` ya existía con los mismos datos
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "409": { $ref: "#/components/responses/IdConflict" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/AssigneeNotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/tasks/{taskId}:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    get:
+      summary: Detalle de una tarea (FR-005)
+      operationId: getTask
+      responses:
+        "200":
+          description: Tarea
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+    patch:
+      summary: Modifica título, descripción, estado y/o responsable
+      description: |
+        Solo se modifican los campos presentes. Se requiere al menos uno.
+        `assigneeId: null` deja la tarea sin asignar. Último guardado gana.
+      operationId: updateTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateTaskRequest" }
+      responses:
+        "200":
+          description: Tarea actualizada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "413": { $ref: "#/components/responses/PayloadTooLarge" }
+        "422": { $ref: "#/components/responses/AssigneeNotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    delete:
+      summary: Borra una tarea; puede deshacerse durante la ventana indicada (FR-013a, FR-013c)
+      operationId: deleteTask
+      responses:
+        "200":
+          description: Tarea borrada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, undoUntil]
+                additionalProperties: false
+                properties:
+                  id: { type: string, format: uuid }
+                  undoUntil:
+                    type: string
+                    format: date-time
+                    description: Límite del servidor (borrado + 15 s). La UI ofrece "Deshacer" 10 s.
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/tasks/{taskId}/restore:
+    parameters:
+      - $ref: "#/components/parameters/TaskId"
+    post:
+      summary: Deshace el borrado de una tarea (FR-013c, FR-013d)
+      operationId: restoreTask
+      responses:
+        "200":
+          description: Tarea restaurada con sus datos; sin asignar si su responsable fue quitado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "404": { $ref: "#/components/responses/TaskNotFound" }
+        "410":
+          description: La ventana para deshacer ha expirado
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+              example:
+                type: about:blank
+                title: Ya no se puede deshacer
+                status: 410
+                code: UNDO_EXPIRED
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/people:
+    get:
+      summary: Lista las personas del equipo, ordenadas por nombre
+      operationId: listPeople
+      responses:
+        "200":
+          description: Personas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                additionalProperties: false
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Person" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+    post:
+      summary: Añade una persona (FR-016, FR-016a)
+      operationId: createPerson
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreatePersonRequest" }
+      responses:
+        "201":
+          description: Persona creada
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Person" }
+        "200":
+          description: Repetición idempotente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Person" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "409":
+          description: "`PERSON_NAME_TAKEN` (nombre repetido) o `ID_CONFLICT`"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /v1/people/{personId}:
+    parameters:
+      - name: personId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      summary: Quita una persona; sus tareas quedan sin asignar (FR-016b)
+      operationId: deletePerson
+      responses:
+        "200":
+          description: Persona quitada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, unassignedTaskCount]
+                additionalProperties: false
+                properties:
+                  id: { type: string, format: uuid }
+                  unassignedTaskCount: { type: integer, minimum: 0 }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/InvalidLink" }
+        "404":
+          description: "`PERSON_NOT_FOUND`"
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+components:
+  securitySchemes:
+    boardAccessCode:
+      type: http
+      scheme: bearer
+      description: Código de acceso del enlace secreto (fragmento `#k=` de la URL).
+
+  parameters:
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  schemas:
+    TaskStatus:
+      type: string
+      enum: [pending, in_progress, done]
+
+    Board:
+      type: object
+      required: [id, name, accessCodeRotatedAt, taskCount, personCount]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 60 }
+        accessCodeRotatedAt: { type: string, format: date-time }
+        taskCount:
+          type: integer
+          minimum: 0
+          description: Tareas no borradas (para la confirmación de borrado, FR-115)
+        personCount: { type: integer, minimum: 0 }
+
+    CreatedBoard:
+      type: object
+      required: [id, name]
+      additionalProperties: false
+      description: Tablero ya existente en una repetición; nunca incluye el código (research R19)
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 60 }
+
+    CreatedBoardWithCode:
+      type: object
+      required: [id, name, accessCode]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 60 }
+        accessCode:
+          type: string
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Código del enlace secreto; no se volverá a devolver (FR-103)
+
+    CreateBoardRequest:
+      type: object
+      required: [id, name]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid, description: Generado por el cliente }
+        name:
+          type: string
+          maxLength: 60
+          description: Se recortan espacios; 1–60 caracteres (code points) tras normalizar (FR-112)
+
+    RenameBoardRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: { type: string, maxLength: 60, description: "1–60 caracteres tras recortar" }
+
+    Task:
+      type: object
+      required: [id, title, description, status, assignee, createdAt, updatedAt]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 5000 }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        assignee:
+          description: Responsable o `null` si está sin asignar
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [id, name]
+              additionalProperties: false
+              properties:
+                id: { type: string, format: uuid }
+                name: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    CreateTaskRequest:
+      type: object
+      required: [id, title]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid, description: Generado por el cliente }
+        title:
+          type: string
+          description: Se recortan espacios; 1–200 caracteres (code points) tras normalizar
+          maxLength: 200
+        description: { type: string, maxLength: 5000, default: "" }
+        assigneeId:
+          oneOf:
+            - { type: string, format: uuid }
+            - { type: "null" }
+
+    UpdateTaskRequest:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title: { type: string, maxLength: 200 }
+        description: { type: string, maxLength: 5000 }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        assigneeId:
+          oneOf:
+            - { type: string, format: uuid }
+            - { type: "null" }
+
+    Person:
+      type: object
+      required: [id, name, assignedTaskCount]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 50 }
+        assignedTaskCount:
+          type: integer
+          minimum: 0
+          description: Tareas no borradas asignadas (para la confirmación de FR-016b)
+
+    CreatePersonRequest:
+      type: object
+      required: [id, name]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 50, description: "1–50 caracteres tras recortar" }
+
+    Problem:
+      type: object
+      description: RFC 9457 Problem Details con extensiones de TaskFlow
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, default: about:blank }
+        title: { type: string, description: Mensaje genérico en español, apto para mostrar }
+        status: { type: integer }
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - INVALID_LINK
+            - TASK_NOT_FOUND
+            - PERSON_NOT_FOUND
+            - ASSIGNEE_NOT_FOUND
+            - PERSON_NAME_TAKEN
+            - ID_CONFLICT
+            - UNDO_EXPIRED
+            - BOARD_CREATION_DISABLED
+            - BOARD_CREATION_LIMITED
+            - NOT_FOUND
+            - RATE_LIMITED
+            - SERVICE_UNAVAILABLE
+            - INTERNAL_ERROR
+        requestId:
+          type: string
+          description: Identificador para correlacionar con los logs del servidor
+        errors:
+          description: Solo en VALIDATION_ERROR; un elemento por campo inválido
+          type: array
+          items:
+            type: object
+            required: [field, rule]
+            properties:
+              field: { type: string, examples: [title, description, status, q, name] }
+              rule:
+                type: string
+                enum: [required, too_short, too_long, invalid_value, invalid_format, unknown_field]
+              limit: { type: integer, description: Límite aplicable, si existe }
+
+  responses:
+    ValidationError:
+      description: Entrada inválida; no se ha modificado nada
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          example:
+            type: about:blank
+            title: Los datos enviados no son válidos
+            status: 400
+            code: VALIDATION_ERROR
+            errors:
+              - { field: title, rule: too_short, limit: 1 }
+    InvalidLink:
+      description: Código de acceso ausente, incorrecto o regenerado (respuesta siempre idéntica)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          example:
+            type: about:blank
+            title: Enlace no válido
+            status: 401
+            code: INVALID_LINK
+    PayloadTooLarge:
+      description: Cuerpo de más de 16 KiB; no se ha modificado nada
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+          example:
+            type: about:blank
+            title: Los datos enviados no son válidos
+            status: 413
+            code: VALIDATION_ERROR
+            errors:
+              - { field: body, rule: too_long, limit: 16384 }
+    TaskNotFound:
+      description: La tarea no existe o ha sido borrada
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    AssigneeNotFound:
+      description: El responsable indicado no existe en el tablero
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    IdConflict:
+      description: Ya existe una entidad con ese `id` y datos distintos
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    RateLimited:
+      description: Demasiadas peticiones; incluye cabecera `Retry-After`
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    ServiceUnavailable:
+      description: Base de datos no disponible
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
