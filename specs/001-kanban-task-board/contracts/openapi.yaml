@@ -426,6 +426,7 @@ components:
             - PERSON_NAME_TAKEN
             - ID_CONFLICT
             - UNDO_EXPIRED
+            - NOT_FOUND
             - RATE_LIMITED
             - SERVICE_UNAVAILABLE
             - INTERNAL_ERROR
