@@ -34,7 +34,7 @@ test('US1: tablero vacío, crear tarea, persistencia y detalle', async ({ page }
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('Slides y datos de ejemplo')).toBeVisible();
   await expect(dialog.getByText('Pendiente')).toBeVisible();
-  await expect(dialog.getByText('Sin asignar')).toBeVisible();
+  await expect(dialog.getByRole('combobox', { name: 'Responsable' }).locator('option:checked')).toHaveText('Sin asignar');
   await expectNoA11yViolations(page);
 
   await page.keyboard.press('Escape');

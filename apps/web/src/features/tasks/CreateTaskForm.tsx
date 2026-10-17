@@ -7,13 +7,16 @@ import {
   TITLE_MIN,
   type ValidationIssueDto,
 } from '@taskflow/contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError } from '../../api/client';
+import { peopleKey } from '../../api/people';
 import { useCreateTask } from '../../api/tasks';
 import { errorMessage, es } from '../../i18n/es';
 import { Button } from '../../ui/Button';
 import { ErrorAlert } from '../../ui/ErrorAlert';
 import { useAnnounce } from '../../ui/LiveRegion';
+import { AssigneeSelect } from './AssigneeSelect';
 import { clampChars } from './textInput';
 import './tasks.css';
 
@@ -38,6 +41,8 @@ export const CreateTaskForm = () => {
   const ids = { heading: useId(), title: useId(), desc: useId() };
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [assigneeId, setAssigneeId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
   // El id se conserva entre reintentos para que el servidor no cree duplicados (FR-011).
@@ -56,12 +61,13 @@ export const CreateTaskForm = () => {
     setFailure(null);
     pendingId.current ??= crypto.randomUUID();
     createTask.mutate(
-      { id: pendingId.current, title, description },
+      { id: pendingId.current, title, description, assigneeId },
       {
         onSuccess: () => {
           pendingId.current = null;
           setTitle('');
           setDescription('');
+          setAssigneeId(null);
           announce(es.createTask.created);
           titleInput.current?.focus();
         },
@@ -78,6 +84,10 @@ export const CreateTaskForm = () => {
             return;
           }
           if (error.code === 'ID_CONFLICT') pendingId.current = null;
+          if (error.code === 'ASSIGNEE_NOT_FOUND') {
+            setAssigneeId(null);
+            void queryClient.invalidateQueries({ queryKey: peopleKey });
+          }
           setFailure(errorMessage(error.code));
         },
       },
@@ -142,6 +152,12 @@ export const CreateTaskForm = () => {
             </span>
           </div>
         </div>
+        <AssigneeSelect
+          label={es.assign.optionalLabel}
+          value={assigneeId}
+          onChange={setAssigneeId}
+          disabled={saving}
+        />
         {failure && <ErrorAlert message={failure} onRetry={submit} retryDisabled={saving} />}
         <div>
           <Button type="submit" variant="primary" disabled={saving}>

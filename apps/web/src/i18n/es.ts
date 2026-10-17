@@ -78,6 +78,13 @@ export const es = {
     nameRequired: 'El nombre es obligatorio.',
     listLabel: 'Personas',
   },
+  assign: {
+    label: 'Responsable',
+    optionalLabel: 'Responsable (opcional)',
+    hintEmpty: 'Añade personas desde «Personas».',
+    assignedTo: (name: string) => `Tarea asignada a ${name}`,
+    unassigned: 'Tarea sin asignar',
+  },
   move: {
     statusLabel: 'Estado',
     statusOf: (title: string) => `de «${title}»`,

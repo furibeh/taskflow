@@ -73,7 +73,7 @@ describe('gestión de personas (US6)', () => {
     const luis = server.addPerson('Luis');
     server.addTask({ title: 'Preparar demo', assignee: { id: luis, name: 'Luis' } });
     renderApp(server);
-    expect(await screen.findByText('Luis')).toBeInTheDocument();
+    expect(await screen.findByRole('article')).toHaveTextContent('Luis');
     const dialog = await openPeople(user);
 
     await user.click(await within(dialog).findByRole('button', { name: 'Quitar a Luis' }));
