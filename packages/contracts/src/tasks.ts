@@ -45,3 +45,18 @@ export const ListTasksResponseSchema = z.strictObject({
 export type ListTasksResponse = z.infer<typeof ListTasksResponseSchema>;
 
 export const TaskIdParamsSchema = z.strictObject({ taskId: z.uuid() });
+
+/** PATCH /tasks/{id}: solo se modifican los campos presentes; al menos uno (minProperties 1). */
+export const UpdateTaskRequestSchema = z
+  .strictObject({
+    title: TaskTitleSchema.optional(),
+    description: TaskDescriptionSchema.optional(),
+    status: TaskStatusSchema.optional(),
+    assigneeId: z.uuid().nullable().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    message: 'required',
+    params: { rule: 'required' },
+    path: [],
+  });
+export type UpdateTaskRequest = z.infer<typeof UpdateTaskRequestSchema>;

@@ -59,6 +59,16 @@ export const createFakeServer = () => {
       return json(201, task);
     }
     const match = /^\/api\/v1\/tasks\/([^/]+)$/.exec(url.pathname);
+    if (match && method === 'PATCH') {
+      const task = tasks.find((t) => t.id === match[1]);
+      if (!task) {
+        return json(404, { type: 'about:blank', title: 'La tarea no existe', status: 404, code: 'TASK_NOT_FOUND' }, true);
+      }
+      const body = JSON.parse(String(init?.body)) as Partial<FakeTask>;
+      clock += 1000;
+      Object.assign(task, body, { updatedAt: new Date(clock).toISOString() });
+      return json(200, task);
+    }
     if (match && method === 'GET') {
       const task = tasks.find((t) => t.id === match[1]);
       return task
@@ -97,7 +107,15 @@ export const createFakeServer = () => {
         release();
       };
     },
-    postBodies(): Array<Record<string, unknown>> {
+    requests(method: string): Array<{ url: string; body: Record<string, unknown> }> {
+      return fetchImpl.mock.calls
+        .filter(([, init]) => (init?.method ?? 'GET') === method)
+        .map(([input, init]) => ({
+          url: String(input),
+          body: init?.body ? (JSON.parse(String(init.body)) as Record<string, unknown>) : {},
+        }));
+    },
+        postBodies(): Array<Record<string, unknown>> {
       return fetchImpl.mock.calls
         .filter(([, init]) => init?.method === 'POST')
         .map(([, init]) => JSON.parse(String(init?.body)) as Record<string, unknown>);

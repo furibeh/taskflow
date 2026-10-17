@@ -1,6 +1,7 @@
 import { TASK_STATUSES, type TaskDto } from '@taskflow/contracts';
 import { useMemo } from 'react';
 import { es } from '../../i18n/es';
+import { BoardDnd } from './BoardDnd';
 import { BoardTabs } from './BoardTabs';
 import { Column } from './Column';
 import { useIsWideLayout } from './useIsWideLayout';
@@ -24,15 +25,17 @@ export const Board = ({ tasks, onOpenTask }: BoardProps) => {
       <h2 id="board-heading" className="visually-hidden">
         {es.board.label}
       </h2>
-      {wide ? (
-        <div className="board__columns">
-          {columns.map(({ status, tasks: columnTasks }) => (
-            <Column key={status} status={status} tasks={columnTasks} onOpenTask={onOpenTask} />
-          ))}
-        </div>
-      ) : (
-        <BoardTabs columns={columns} onOpenTask={onOpenTask} />
-      )}
+      <BoardDnd enabled={wide}>
+        {wide ? (
+          <div className="board__columns">
+            {columns.map(({ status, tasks: columnTasks }) => (
+              <Column key={status} status={status} tasks={columnTasks} onOpenTask={onOpenTask} />
+            ))}
+          </div>
+        ) : (
+          <BoardTabs columns={columns} onOpenTask={onOpenTask} />
+        )}
+      </BoardDnd>
     </section>
   );
 };

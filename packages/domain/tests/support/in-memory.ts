@@ -126,6 +126,13 @@ export class InMemoryTaskRepository implements TaskRepository {
       .map((t) => this.view(t));
   }
 
+  async update(task: Task): Promise<TaskView | null> {
+    const current = this.tasks.get(task.id);
+    if (!current || current.boardId !== task.boardId) return null;
+    this.tasks.set(task.id, { ...task });
+    return this.view(task);
+  }
+
   count(): number {
     return this.tasks.size;
   }

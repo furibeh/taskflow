@@ -3,8 +3,9 @@ import {
   TaskSchema,
   type CreateTaskRequest,
   type TaskDto,
+  type UpdateTaskRequest,
 } from '@taskflow/contracts';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from './ApiContext';
 
 export const tasksKey = ['tasks'] as const;
@@ -42,3 +43,32 @@ export const useCreateTask = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tasksKey }),
   });
 };
+
+const updateTaskKey = ['updateTask'] as const;
+
+export interface UpdateTaskVariables {
+  readonly id: string;
+  readonly patch: UpdateTaskRequest;
+}
+
+/** Modificación pesimista: el tablero solo cambia tras la confirmación del servidor (FR-021). */
+export const useUpdateTask = () => {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: updateTaskKey,
+    mutationFn: ({ id, patch }: UpdateTaskVariables) =>
+      api.request(`/v1/tasks/${id}`, { method: 'PATCH', body: patch, schema: TaskSchema }),
+    onSuccess: async (task) => {
+      queryClient.setQueryData(['task', task.id], task);
+      await queryClient.invalidateQueries({ queryKey: tasksKey });
+    },
+  });
+};
+
+/** true mientras haya una modificación de esa tarea pendiente de confirmar. */
+export const useIsTaskSaving = (taskId: string): boolean =>
+  useMutationState({
+    filters: { mutationKey: updateTaskKey, status: 'pending' },
+    select: (mutation) => (mutation.state.variables as UpdateTaskVariables | undefined)?.id,
+  }).includes(taskId);
