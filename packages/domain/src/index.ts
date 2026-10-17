@@ -5,4 +5,8 @@ export * from './shared/text';
 export * from './shared/clock';
 export * from './shared/ids';
 export * from './board/board';
+export * from './tasks/task';
+export * from './tasks/task-repository';
+export * from './people/person-lookup';
 export * from './use-cases/board';
+export * from './use-cases/tasks';

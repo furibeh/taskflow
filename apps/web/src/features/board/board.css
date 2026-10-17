@@ -1,0 +1,108 @@
+.board__columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  max-height: 75vh;
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  background: var(--color-column);
+}
+.column--tab {
+  max-height: none;
+}
+.column__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.column__title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.column__count {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+.column__empty {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+.column__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.card__title {
+  min-height: var(--tap-size);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.card__assignee {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: 0.9rem;
+}
+.card__assignee--none {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+.card__icon {
+  flex: none;
+}
+
+.board-tabs__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin-bottom: var(--space-2);
+}
+.board-tabs__tab {
+  min-height: var(--tap-size);
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.board-tabs__tab[aria-selected='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}

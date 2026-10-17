@@ -4,12 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del repositorio
 
-TaskFlow (tablero kanban compartido para equipos pequeños) está en fase de diseño: todavía **no
-hay código de aplicación**. Lo que existe es la documentación de Spec Kit de la feature
-`001-kanban-task-board` (rama del mismo nombre). La implementación sigue
-`specs/001-kanban-task-board/tasks.md` (T001–T134, organizadas por historia de usuario, pruebas
-primero). Los comandos y rutas de abajo son los definidos en el plan; verifica que existen
-antes de usarlos y actualiza este archivo cuando cambien.
+TaskFlow (tablero kanban compartido para equipos pequeños) se implementa por fases siguiendo
+`specs/001-kanban-task-board/tasks.md` (T001–T134, por historia de usuario, pruebas primero;
+las tareas hechas están marcadas `[X]`). Implementado: fases 1–3 (infraestructura, base común y
+US1: ver el tablero y crear tareas). Rama de trabajo: `001-kanban-task-board`.
 
 Idioma: la documentación, los textos de la UI y los mensajes de commit están en español.
 
@@ -87,7 +85,8 @@ npm test                               # dominio + contracts + API + web
 npm test -w packages/domain            # un solo paquete
 npx vitest run <ruta/al/archivo.test.ts> -w apps/api   # un solo archivo
 npx vitest run -t "<nombre del test>" -w packages/domain
-npm run test:e2e                       # Playwright (proyectos desktop y mobile-320, con axe)
+npm run test:e2e                       # Playwright (desktop y mobile-320, con axe); requiere db-test
+npx playwright install chromium        # una vez, desde e2e/
 npm run lint && npm run lint:deps && npm run typecheck
 
 npm run db:migrate -w apps/api         # aplicar migraciones
@@ -97,3 +96,13 @@ npm run board:rotate -w apps/api       # regenerar el enlace si se pierde
 
 Las pruebas de `apps/api` usan una PostgreSQL real compartida (`TEST_DATABASE_URL`) y se
 ejecutan con `fileParallelism: false`; no las paralelices entre archivos.
+
+Los E2E levantan su propia API (puerto 3100) y web (5174) contra `db-test`, migran y obtienen un
+código con `board:rotate` (guardado en `e2e/.auth/`, ignorado por git) y vacían tareas y personas
+antes de cada prueba. No los ejecutes a la vez que las pruebas de `apps/api` (misma base de
+datos). Con `E2E_BASE_URL` + `E2E_ACCESS_CODE` se ejecutan contra un entorno ya arrancado.
+
+Paquetes TypeScript sin compilar: `domain` y `contracts` exportan `src/index.ts`; la API se
+ejecuta con `tsx` y la web con Vite (`moduleResolution: Bundler`). Las migraciones se registran a
+mano en `apps/api/src/persistence/migrations/index.ts`. `vitest` en `packages/domain` no tiene
+tipos de Node: las pruebas del dominio no pueden usar `Buffer` ni `node:*`.
