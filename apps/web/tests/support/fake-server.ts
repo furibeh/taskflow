@@ -22,6 +22,8 @@ const json = (status: number, body: unknown, problem = false) =>
  */
 export const createFakeServer = () => {
   const tasks: FakeTask[] = [];
+  const deleted = new Map<string, { task: FakeTask; index: number }>();
+  let restoreExpired = false;
   const people: Array<{ id: string; name: string }> = [];
   const problem = (status: number, code: string) =>
     json(status, { type: 'about:blank', title: code, status, code }, true);
@@ -111,6 +113,22 @@ export const createFakeServer = () => {
       return json(201, task);
     }
     const match = /^\/api\/v1\/tasks\/([^/]+)$/.exec(url.pathname);
+    if (match && method === 'DELETE') {
+      const index = tasks.findIndex((t) => t.id === match[1]);
+      if (index < 0) return problem(404, 'TASK_NOT_FOUND');
+      const [removed] = tasks.splice(index, 1);
+      deleted.set(removed!.id, { task: removed!, index });
+      return json(200, { id: removed!.id, undoUntil: new Date(clock + 15_000).toISOString() });
+    }
+    const restoreMatch = /^\/api\/v1\/tasks\/([^/]+)\/restore$/.exec(url.pathname);
+    if (restoreMatch && method === 'POST') {
+      if (restoreExpired) return problem(410, 'UNDO_EXPIRED');
+      const entry = deleted.get(restoreMatch[1]!);
+      if (!entry) return problem(404, 'TASK_NOT_FOUND');
+      deleted.delete(entry.task.id);
+      tasks.splice(entry.index, 0, entry.task);
+      return json(200, entry.task);
+    }
     if (match && method === 'PATCH') {
       const task = tasks.find((t) => t.id === match[1]);
       if (!task) {
@@ -158,6 +176,10 @@ export const createFakeServer = () => {
         updatedAt: now,
         ...partial,
       });
+    },
+    /** Las restauraciones responden 410 UNDO_EXPIRED. */
+    expireRestores() {
+      restoreExpired = true;
     },
     /** La siguiente escritura falla con un error de red. */
     failNextWithNetworkError() {

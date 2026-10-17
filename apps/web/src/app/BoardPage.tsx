@@ -1,6 +1,6 @@
 import type { TaskDto } from '@taskflow/contracts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePeople } from '../api/people';
 import { tasksQueryKey, useTasks } from '../api/tasks';
 import { Board } from '../features/board/Board';
@@ -9,6 +9,7 @@ import { NoResults } from '../features/filters/NoResults';
 import { useFilters } from '../features/filters/useFilters';
 import { CreateTaskForm } from '../features/tasks/CreateTaskForm';
 import { TaskDetailDialog } from '../features/tasks/TaskDetailDialog';
+import { UndoDeleteToast } from '../features/tasks/UndoDeleteToast';
 import { es } from '../i18n/es';
 import { ErrorAlert } from '../ui/ErrorAlert';
 import { OperationError, OperationFeedbackProvider } from '../ui/OperationFeedback';
@@ -20,6 +21,8 @@ export const BoardPage = () => {
   const people = usePeople();
   const queryClient = useQueryClient();
   const [openTask, setOpenTask] = useState<TaskDto | null>(null);
+  const [lastDeleted, setLastDeleted] = useState<TaskDto | null>(null);
+  const dismissUndo = useCallback(() => setLastDeleted(null), []);
   // Aviso ligado a la consulta en la que se creó la tarea: desaparece al cambiar los filtros.
   const [hiddenNoticeFor, setHiddenNoticeFor] = useState<typeof filters.query | null>(null);
   const { assignee, setAssignee } = filters;
@@ -64,7 +67,15 @@ export const BoardPage = () => {
             )}
           </>
         )}
-        <TaskDetailDialog task={openTask} onClose={() => setOpenTask(null)} />
+        <TaskDetailDialog
+          task={openTask}
+          onClose={() => setOpenTask(null)}
+          onDeleted={(task) => {
+            setOpenTask(null);
+            setLastDeleted(task);
+          }}
+        />
+        {lastDeleted && <UndoDeleteToast key={lastDeleted.id} task={lastDeleted} onDone={dismissUndo} />}
       </main>
     </OperationFeedbackProvider>
   );

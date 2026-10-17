@@ -1,6 +1,7 @@
 import type { PersonLookup } from '../people/person-lookup';
 import type { Clock } from '../shared/clock';
 import { validationError, type DomainError, type ValidationIssue } from '../shared/errors';
+import { UNDO_WINDOW_SERVER_MS } from '../shared/limits';
 import { err, ok, type Result } from '../shared/result';
 import {
   parseTaskDescription,
@@ -168,3 +169,36 @@ export const updateTask = async (
   const updated = await deps.tasks.update({ ...next, updatedAt: deps.clock.now() });
   return updated ? ok(updated) : err({ code: 'TASK_NOT_FOUND' });
 };
+
+/** Borra una tarea; puede deshacerse hasta `undoUntil` (FR-013a, FR-013c, R9). */
+export const deleteTask = async (
+  deps: Pick<TaskDeps, 'tasks' | 'clock'>,
+  boardId: string,
+  id: string,
+): Promise<Result<{ id: string; undoUntil: Date }, DomainError>> => {
+  const deletedAt = deps.clock.now();
+  if (!(await deps.tasks.softDelete(boardId, id, deletedAt))) return err({ code: 'TASK_NOT_FOUND' });
+  return ok({ id, undoUntil: new Date(deletedAt.getTime() + UNDO_WINDOW_SERVER_MS) });
+};
+
+/**
+ * Deshace un borrado si no han pasado más de 15 s (la interfaz ofrece 10 s; el margen cubre la
+ * latencia de red). La tarea vuelve sin responsable si este fue quitado (FR-013d).
+ */
+export const restoreTask = async (
+  deps: Pick<TaskDeps, 'tasks' | 'clock'>,
+  boardId: string,
+  id: string,
+): Promise<Result<TaskView, DomainError>> => {
+  const deleted = await deps.tasks.findDeletedById(boardId, id);
+  if (!deleted) return err({ code: 'TASK_NOT_FOUND' });
+  if (deps.clock.now().getTime() - deleted.deletedAt.getTime() > UNDO_WINDOW_SERVER_MS) {
+    return err({ code: 'UNDO_EXPIRED' });
+  }
+  const restored = await deps.tasks.restore(boardId, id);
+  return restored ? ok(restored) : err({ code: 'TASK_NOT_FOUND' });
+};
+
+/** Hace definitivo el borrado de lo que superó la ventana de deshacer, según el reloj del dominio. */
+export const purgeDeletedTasks = (deps: Pick<TaskDeps, 'tasks' | 'clock'>): Promise<number> =>
+  deps.tasks.purgeDeletedBefore(new Date(deps.clock.now().getTime() - UNDO_WINDOW_SERVER_MS));

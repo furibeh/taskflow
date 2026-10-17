@@ -1,5 +1,6 @@
 import {
   CreateTaskRequestSchema,
+  DeleteTaskResponseSchema,
   ListTasksQuerySchema,
   ListTasksResponseSchema,
   ProblemSchema,
@@ -10,6 +11,8 @@ import {
 } from '@taskflow/contracts';
 import {
   createTask,
+  deleteTask,
+  restoreTask,
   getTask,
   listTasks,
   parseTaskCriteria,
@@ -94,6 +97,26 @@ export const taskRoutes: FastifyPluginAsyncZod<{ deps: TaskDeps }> = async (app,
         Object.entries(request.body).filter(([, value]) => value !== undefined),
       ) as UpdateTaskInput;
       const result = await updateTask(deps, currentBoard(request).id, request.params.taskId, input);
+      if (!result.ok) throw new DomainFailure(result.error);
+      return toTaskDto(result.value);
+    },
+  );
+
+  app.delete(
+    '/tasks/:taskId',
+    { schema: { params: TaskIdParamsSchema, response: { 200: DeleteTaskResponseSchema } } },
+    async (request) => {
+      const result = await deleteTask(deps, currentBoard(request).id, request.params.taskId);
+      if (!result.ok) throw new DomainFailure(result.error);
+      return { id: result.value.id, undoUntil: result.value.undoUntil.toISOString() };
+    },
+  );
+
+  app.post(
+    '/tasks/:taskId/restore',
+    { schema: { params: TaskIdParamsSchema, response: { 200: TaskSchema } } },
+    async (request) => {
+      const result = await restoreTask(deps, currentBoard(request).id, request.params.taskId);
       if (!result.ok) throw new DomainFailure(result.error);
       return toTaskDto(result.value);
     },

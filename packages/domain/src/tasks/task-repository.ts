@@ -16,4 +16,10 @@ export interface TaskRepository {
   list(boardId: string, criteria: TaskCriteria): Promise<TaskView[]>;
   /** Guarda los campos modificables de una tarea no borrada; null si ya no existe. */
   update(task: Task): Promise<TaskView | null>;
+  /** Borrado lógico con la fecha que decide el dominio; false si no existe o ya estaba borrada. */
+  softDelete(boardId: string, id: string, deletedAt: Date): Promise<boolean>;
+  findDeletedById(boardId: string, id: string): Promise<{ task: TaskView; deletedAt: Date } | null>;
+  restore(boardId: string, id: string): Promise<TaskView | null>;
+  /** Elimina físicamente las tareas borradas antes de `date`; devuelve cuántas. */
+  purgeDeletedBefore(date: Date): Promise<number>;
 }
