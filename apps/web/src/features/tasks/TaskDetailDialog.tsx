@@ -9,6 +9,7 @@ import { Dialog } from '../../ui/Dialog';
 import { ErrorAlert } from '../../ui/ErrorAlert';
 import { Button } from '../../ui/Button';
 import { useAnnounce } from '../../ui/LiveRegion';
+import { useOperationFeedback } from '../../ui/OperationFeedback';
 import { AssigneeSelect } from './AssigneeSelect';
 import { DeleteTaskConfirm } from './DeleteTaskConfirm';
 import { EditTaskForm } from './EditTaskForm';
@@ -37,6 +38,16 @@ export const TaskDetailDialog = ({ task: initial, onClose, onDeleted }: TaskDeta
   const update = useUpdateTask();
   const announce = useAnnounce();
   const [failure, setFailure] = useState<string | null>(null);
+  const feedback = useOperationFeedback();
+
+  // Otra persona borró la tarea mientras se editaba o se iba a borrar (FR-013b): se avisa en el
+  // tablero, se cierra el detalle y se recarga el tablero.
+  const onGone = () => {
+    setMode('view');
+    feedback.report(errorMessage('TASK_NOT_FOUND'));
+    void queryClient.invalidateQueries({ queryKey: tasksKey });
+    onClose();
+  };
 
   const assign = (assigneeId: string | null) => {
     if (!task) return;
@@ -70,7 +81,7 @@ export const TaskDetailDialog = ({ task: initial, onClose, onDeleted }: TaskDeta
       ) : (
         task &&
         (mode === 'edit' ? (
-          <EditTaskForm key={task.id} task={task} onDone={() => setMode('view')} />
+          <EditTaskForm key={task.id} task={task} onDone={() => setMode('view')} onGone={onGone} />
         ) : (
           <div className="task-detail">
             <dl className="task-detail__meta">
@@ -101,6 +112,7 @@ export const TaskDetailDialog = ({ task: initial, onClose, onDeleted }: TaskDeta
               <DeleteTaskConfirm
                 task={task}
                 onCancel={() => setMode('view')}
+                onGone={onGone}
                 onDeleted={(deleted, viaKeyboard) => {
                   setMode('view');
                   onDeleted(deleted, viaKeyboard);

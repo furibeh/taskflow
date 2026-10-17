@@ -96,3 +96,26 @@ describe('contrato: respuestas de error de forma (convergencia T139)', () => {
     expectMatchesContract('getTask', 400, res.json());
   });
 });
+
+describe('contrato: 400 por id no UUID (convergencia T146)', () => {
+  let t: TestApp;
+
+  beforeAll(async () => {
+    t = await buildTestApp();
+    await t.reset();
+  });
+
+  afterAll(async () => {
+    await t.close();
+  });
+
+  it.each([
+    ['deleteTask', 'DELETE', '/api/v1/tasks/123'],
+    ['restoreTask', 'POST', '/api/v1/tasks/123/restore'],
+    ['deletePerson', 'DELETE', '/api/v1/people/123'],
+  ] as const)('%s declara 400', async (operationId, method, url) => {
+    const res = await t.app.inject({ method, url, headers: t.authHeader() });
+    expect(res.statusCode).toBe(400);
+    expectMatchesContract(operationId, 400, res.json());
+  });
+});

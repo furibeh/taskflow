@@ -19,10 +19,12 @@ import { clampChars } from './textInput';
 interface EditTaskFormProps {
   readonly task: TaskDto;
   readonly onDone: () => void;
+  /** La tarea ya no existe (borrada por otra persona): no tiene sentido reintentar. */
+  readonly onGone: () => void;
 }
 
 /** Edición de título y descripción con las reglas de la creación (FR-013); no toca estado ni responsable. */
-export const EditTaskForm = ({ task, onDone }: EditTaskFormProps) => {
+export const EditTaskForm = ({ task, onDone, onGone }: EditTaskFormProps) => {
   const ids = { title: useId(), desc: useId() };
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -54,7 +56,11 @@ export const EditTaskForm = ({ task, onDone }: EditTaskFormProps) => {
           announce(es.edit.saved);
           onDone();
         },
-        onError: (error) => setFailure(errorMessage(error instanceof ApiError ? error.code : 'INTERNAL_ERROR')),
+        onError: (error) => {
+          const code = error instanceof ApiError ? error.code : 'INTERNAL_ERROR';
+          if (code === 'TASK_NOT_FOUND') return onGone();
+          setFailure(errorMessage(code));
+        },
       },
     );
   };

@@ -443,3 +443,12 @@ Task: "T090 People schemas in packages/contracts/src/people.ts"
 - [X] T140 Document the `RATE_LIMIT_GLOBAL`, `RATE_LIMIT_WRITES` and `RATE_LIMIT_UNAUTHORIZED` variables (configurable, minimum 1, never disabled) in `specs/001-kanban-task-board/research.md` R8 and `specs/001-kanban-task-board/quickstart.md` per plan: D5 (unrequested)
 - [X] T141 Run the axe WCAG 2.1 AA audit also with `colorScheme: 'dark'` in `e2e/tests/us1-board-create.spec.ts`, or remove the dark theme from `apps/web/src/ui/tokens.css`, per FR-031 / SC-006 (unrequested)
 - [X] T142 Add tests for `boardLink` (fragment `#k=`, trailing slashes) and for `board:init` printing the code only on first creation in `apps/api/tests/cli/board-cli.test.ts` per Constitution IV (partial)
+
+---
+
+## Phase 11: Convergence
+
+- [X] T143 On `TASK_NOT_FOUND` when editing or deleting from the detail dialog, show "Esta tarea ya no existe.", refetch the board, close the dialog and do not offer "Reintentar" in `apps/web/src/features/tasks/EditTaskForm.tsx` and `apps/web/src/features/tasks/DeleteTaskConfirm.tsx`, with component tests in `apps/web/tests/tasks/edit-delete.test.tsx` per FR-013b (partial)
+- [X] T144 On `PERSON_NOT_FOUND` when removing a person, show "Esta persona ya no está en el equipo." and refetch people and tasks in `apps/web/src/features/people/PeopleDialog.tsx`, with a test in `apps/web/tests/people/people-dialog.test.tsx` per plan: error table (partial)
+- [X] T145 Announce the real origin column when a pointer/touch drag starts (instead of "Columna actual: .") in `apps/web/src/features/board/BoardDnd.tsx` per FR-019a (partial)
+- [X] T146 Declare the `400` response (invalid UUID) for `deleteTask`, `restoreTask` and `deletePerson` in `specs/001-kanban-task-board/contracts/openapi.yaml` and validate them in `apps/api/tests/contract/` per plan: contracts (partial)

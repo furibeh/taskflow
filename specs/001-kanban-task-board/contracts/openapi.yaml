@@ -207,6 +207,7 @@ paths:
                     type: string
                     format: date-time
                     description: Límite del servidor (borrado + 15 s). La UI ofrece "Deshacer" 10 s.
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/InvalidLink" }
         "404": { $ref: "#/components/responses/TaskNotFound" }
         "429": { $ref: "#/components/responses/RateLimited" }
@@ -223,6 +224,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Task" }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/InvalidLink" }
         "404": { $ref: "#/components/responses/TaskNotFound" }
         "410":
@@ -304,6 +306,7 @@ paths:
                 properties:
                   id: { type: string, format: uuid }
                   unassignedTaskCount: { type: integer, minimum: 0 }
+        "400": { $ref: "#/components/responses/ValidationError" }
         "401": { $ref: "#/components/responses/InvalidLink" }
         "404":
           description: "`PERSON_NOT_FOUND`"

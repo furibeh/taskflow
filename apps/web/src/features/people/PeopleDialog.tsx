@@ -6,9 +6,11 @@ import {
   PERSON_NAME_MIN,
   type PersonDto,
 } from '@taskflow/contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import { useId, useRef, useState, type FormEvent } from 'react';
 import { ApiError } from '../../api/client';
-import { useCreatePerson, useDeletePerson, usePeople } from '../../api/people';
+import { peopleKey, useCreatePerson, useDeletePerson, usePeople } from '../../api/people';
+import { tasksKey } from '../../api/tasks';
 import { errorMessage, es } from '../../i18n/es';
 import { Button } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
@@ -24,9 +26,11 @@ interface PersonRowProps {
   readonly confirming: boolean;
   readonly onAskRemove: () => void;
   readonly onCancel: () => void;
+  /** La persona ya no existe (quitada por otra persona). */
+  readonly onGone: () => void;
 }
 
-const PersonRow = ({ person, confirming, onAskRemove, onCancel }: PersonRowProps) => {
+const PersonRow = ({ person, confirming, onAskRemove, onCancel, onGone }: PersonRowProps) => {
   const remove = useDeletePerson();
   const announce = useAnnounce();
   const [failure, setFailure] = useState<string | null>(null);
@@ -35,7 +39,11 @@ const PersonRow = ({ person, confirming, onAskRemove, onCancel }: PersonRowProps
     setFailure(null);
     remove.mutate(person.id, {
       onSuccess: () => announce(es.people.removed(person.name)),
-      onError: (error) => setFailure(errorMessage(codeOf(error))),
+      onError: (error) => {
+        const code = codeOf(error);
+        if (code === 'PERSON_NOT_FOUND') return onGone();
+        setFailure(errorMessage(code));
+      },
     });
   };
 
@@ -79,6 +87,15 @@ export const PeopleDialog = ({ open, onClose }: { readonly open: boolean; readon
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Otra persona ya la quitó: se avisa y se recargan personas y tareas (tabla de errores del plan).
+  const onPersonGone = () => {
+    setConfirmingId(null);
+    setFailure(errorMessage('PERSON_NOT_FOUND'));
+    void queryClient.invalidateQueries({ queryKey: peopleKey });
+    void queryClient.invalidateQueries({ queryKey: tasksKey });
+  };
 
   const submit = () => {
     const issue = checkLength(normalizeText(name), { min: PERSON_NAME_MIN, max: PERSON_NAME_MAX });
@@ -159,6 +176,7 @@ export const PeopleDialog = ({ open, onClose }: { readonly open: boolean; readon
               confirming={confirmingId === person.id}
               onAskRemove={() => setConfirmingId(person.id)}
               onCancel={() => setConfirmingId(null)}
+              onGone={onPersonGone}
             />
           ))}
         </ul>

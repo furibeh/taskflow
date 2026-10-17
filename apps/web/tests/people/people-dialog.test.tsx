@@ -88,3 +88,25 @@ describe('gestión de personas (US6)', () => {
     );
   });
 });
+
+describe('la persona ya no existe (T144)', () => {
+  it('al quitarla: avisa y recarga personas y tareas', async () => {
+    const user = userEvent.setup();
+    const server = createFakeServer();
+    const luis = server.addPerson('Luis');
+    server.addTask({ title: 'Preparar demo', assignee: { id: luis, name: 'Luis' } });
+    renderApp(server);
+    const dialog = await openPeople(user);
+
+    await user.click(await within(dialog).findByRole('button', { name: 'Quitar a Luis' }));
+    // Otra persona la quita antes de confirmar (y sus tareas quedan sin asignar).
+    server.people.splice(0, 1);
+    server.tasks[0]!.assignee = null;
+    await user.click(within(dialog).getByRole('button', { name: 'Quitar' }));
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Esta persona ya no está en el equipo.');
+    await waitFor(() => expect(within(dialog).queryByText('Luis')).not.toBeInTheDocument());
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.getByRole('article')).toHaveTextContent('Sin asignar'));
+  });
+});
