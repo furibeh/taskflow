@@ -430,3 +430,16 @@ Task: "T090 People schemas in packages/contracts/src/people.ts"
 - Hacer commit tras cada tarea o grupo lógico.
 - Ninguna tarea se marca como hecha si sus pruebas fallan (constitución).
 - Decisiones D1–D10 de `plan.md` aprobadas el 2026-10-17.
+
+---
+
+## Phase 10: Convergence
+
+- [ ] T135 Make per-IP rate limits identify the real client behind the web proxy: explain the approach (e.g. `TRUST_PROXY` env with the proxy's address, `xfwd: true` in the Vite proxy) and get user approval before applying it (Constitution: security decision), then configure `trustProxy` in `apps/api/src/http/app.ts` and `apps/web/vite.config.ts`, with a test proving that 20 failed attempts from one client do not block another client per plan: D5 (contradicts)
+- [ ] T136 Add a `Retry-After` header to the `429 RATE_LIMITED` response sent by the unauthorized-attempts limiter in `apps/api/src/http/plugins/auth.ts` and assert it in `apps/api/tests/integration/rate-limit.test.ts` per contracts/openapi.yaml `RateLimited` (partial)
+- [ ] T137 Make the card title button span the full card width so every tap target is at least 44×44 px in `apps/web/src/features/board/board.css`, with a check in `e2e/tests/us1-board-create.spec.ts` per FR-033 (partial)
+- [ ] T138 Define and apply a Content-Security-Policy for the web document (`default-src 'self'`, `connect-src 'self'`, `frame-ancestors 'none'`; dev-only relaxations for Vite HMR documented) in `apps/web/vite.config.ts` per plan: D5 (partial)
+- [ ] T139 Declare the `413` response for `createTask`/`updateTask` and the `400` response for `getTask` (invalid `taskId`) in `specs/001-kanban-task-board/contracts/openapi.yaml` and validate them in `apps/api/tests/contract/tasks.contract.test.ts` per plan: contracts (partial)
+- [ ] T140 Document the `RATE_LIMIT_GLOBAL`, `RATE_LIMIT_WRITES` and `RATE_LIMIT_UNAUTHORIZED` variables (configurable, minimum 1, never disabled) in `specs/001-kanban-task-board/research.md` R8 and `specs/001-kanban-task-board/quickstart.md` per plan: D5 (unrequested)
+- [ ] T141 Run the axe WCAG 2.1 AA audit also with `colorScheme: 'dark'` in `e2e/tests/us1-board-create.spec.ts`, or remove the dark theme from `apps/web/src/ui/tokens.css`, per FR-031 / SC-006 (unrequested)
+- [ ] T142 Add tests for `boardLink` (fragment `#k=`, trailing slashes) and for `board:init` printing the code only on first creation in `apps/api/tests/cli/board-cli.test.ts` per Constitution IV (partial)
