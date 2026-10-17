@@ -16,6 +16,7 @@ import { authPlugin } from './plugins/auth';
 import { errorHandlerPlugin } from './plugins/error-handler';
 import { DEFAULT_RATE_LIMITS, securityPlugin, type RateLimits } from './plugins/security';
 import { boardRoutes } from './routes/board';
+import { publicBoardRoutes, type BoardCreationOptions } from './routes/boards';
 import { healthRoutes } from './routes/health';
 import { peopleRoutes } from './routes/people';
 import { taskRoutes } from './routes/tasks';
@@ -28,6 +29,8 @@ export interface AppDeps {
   readonly rateLimits?: RateLimits | null;
   /** IP o rangos CIDR de los proxies de confianza (X-Forwarded-For). Vacío = ninguno. */
   readonly trustProxy?: readonly string[];
+  /** Creación de tableros desde la web (plan D12); por defecto, activada con 10 por IP y hora. */
+  readonly boardCreation?: BoardCreationOptions;
 }
 
 export const BODY_LIMIT_BYTES = 16 * 1024;
@@ -61,16 +64,27 @@ export const buildApp = async (deps: AppDeps): Promise<FastifyInstance> => {
       await api.register(healthRoutes, { db: deps.db });
       await api.register(
         async (v1) => {
-          await v1.register(authPlugin, {
-            boards,
-            accessCodes: nodeAccessCodeService,
-            unauthorizedPerMinute: rateLimits?.unauthorized ?? null,
+          // Ámbito público hermano del autenticado: el hook de auth no se aplica aquí (D16).
+          await v1.register(publicBoardRoutes, {
+            deps: {
+              boards,
+              accessCodes: nodeAccessCodeService,
+              clock: deps.clock,
+              creation: deps.boardCreation ?? { enabled: true, perHour: 10 },
+            },
           });
-          await v1.register(boardRoutes, {
-            deps: { boards, accessCodes: nodeAccessCodeService, clock: deps.clock },
+          await v1.register(async (authed) => {
+            await authed.register(authPlugin, {
+              boards,
+              accessCodes: nodeAccessCodeService,
+              unauthorizedPerMinute: rateLimits?.unauthorized ?? null,
+            });
+            await authed.register(boardRoutes, {
+              deps: { boards, accessCodes: nodeAccessCodeService, clock: deps.clock },
+            });
+            await authed.register(taskRoutes, { deps: taskDeps });
+            await authed.register(peopleRoutes, { deps: peopleDeps });
           });
-          await v1.register(taskRoutes, { deps: taskDeps });
-          await v1.register(peopleRoutes, { deps: peopleDeps });
         },
         { prefix: '/v1' },
       );

@@ -35,6 +35,8 @@ export interface TestAppOptions {
   readonly brokenDatabase?: boolean;
   /** Captura los logs (con la misma configuración de redacción que producción). */
   readonly captureLogs?: boolean;
+  /** Creación de tableros desde la web (por defecto activada y sin límite práctico). */
+  readonly boardCreation?: { readonly enabled: boolean; readonly perHour: number };
 }
 
 export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestApp> => {
@@ -50,7 +52,13 @@ export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestAp
     },
   });
   const logger = options.captureLogs ? { ...(loggerOptions('info') as object), stream } : false;
-  const app = await buildApp({ db, clock, rateLimits: null, logger });
+  const app = await buildApp({
+    db,
+    clock,
+    rateLimits: null,
+    logger,
+    boardCreation: options.boardCreation ?? { enabled: true, perHour: 1000 },
+  });
   await app.ready();
 
   const boards = new KyselyBoardRepository(db);
