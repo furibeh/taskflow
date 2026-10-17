@@ -47,3 +47,34 @@ describe('configuración de límites de peticiones', () => {
     },
   );
 });
+
+describe('configuración de la creación de tableros (FR-105, FR-106)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('por defecto está activada con 10 creaciones por hora', () => {
+    const env = loadEnv({ ...base });
+    expect(env.BOARD_CREATION_ENABLED).toBe(true);
+    expect(env.BOARD_CREATION_PER_HOUR).toBe(10);
+  });
+
+  it('se puede desactivar y cambiar el límite', () => {
+    const env = loadEnv({ ...base, BOARD_CREATION_ENABLED: 'false', BOARD_CREATION_PER_HOUR: '3' });
+    expect(env.BOARD_CREATION_ENABLED).toBe(false);
+    expect(env.BOARD_CREATION_PER_HOUR).toBe(3);
+  });
+
+  it.each([
+    ['BOARD_CREATION_ENABLED', 'yes'],
+    ['BOARD_CREATION_ENABLED', '0'],
+    ['BOARD_CREATION_PER_HOUR', '0'],
+    ['BOARD_CREATION_PER_HOUR', 'abc'],
+  ])('rechaza %s=%s', (name, value) => {
+    vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+      throw new Error(`exit ${code}`);
+    }) as never);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => loadEnv({ ...base, [name]: value })).toThrow('exit 1');
+  });
+});

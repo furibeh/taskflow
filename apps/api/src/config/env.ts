@@ -29,6 +29,12 @@ const EnvSchema = z.object({
     .default('')
     .transform((value) => (value.trim() === '' ? [] : value.split(',').map((v) => v.trim())))
     .refine((list) => list.every(isAddressOrCidr), 'debe ser una lista de IP o rangos CIDR'),
+  // Creación de tableros desde la web (plan D12): interruptor y creaciones nuevas por IP y hora.
+  BOARD_CREATION_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  BOARD_CREATION_PER_HOUR: z.coerce.number().int().min(1).max(100_000).default(10),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

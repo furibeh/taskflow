@@ -24,8 +24,9 @@ Fuente de verdad, en orden de autoridad:
    - Cambios de esquema solo mediante migraciones versionadas con `up`/`down`.
 2. `specs/001-kanban-task-board/spec.md` — requisitos (FR-###, SC-###) y clarificaciones.
 3. `plan.md`, `research.md` (decisiones R1–R17 con alternativas), `data-model.md`,
-   `contracts/openapi.yaml` (contrato de la API; las pruebas de contrato lo cargan desde esta
-   ruta), `quickstart.md` (validación manual).
+   `contracts/openapi.yaml`, `quickstart.md` (validación manual). El contrato **vigente** es
+   `specs/002-multiple-boards/contracts/openapi.yaml` (1.1.0, copia completa del de la 001 más
+   los cambios); las pruebas de contrato lo cargan desde esa ruta.
 4. `tasks.md` — marcar `[x]` solo cuando la tarea y sus pruebas pasan.
 
 Comandos de Spec Kit disponibles como skills: `/speckit-specify`, `/speckit-clarify`,
