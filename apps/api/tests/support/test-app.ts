@@ -92,8 +92,10 @@ export const buildTestApp = async (options: TestAppOptions = {}): Promise<TestAp
         .insertInto('board')
         .values({
           id,
+          name: 'Borrado',
           access_code_hash: Buffer.from(nodeAccessCodeService.hash(code)),
           access_code_rotated_at: clock.now(),
+          updated_at: clock.now(),
         })
         .execute();
       await db.deleteFrom('board').where('id', '=', id).execute();

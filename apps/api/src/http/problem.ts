@@ -12,6 +12,8 @@ const TITLES: Record<ErrorCode, string> = {
   PERSON_NAME_TAKEN: 'Ya existe una persona con ese nombre',
   ID_CONFLICT: 'Ya existe un elemento con ese identificador',
   UNDO_EXPIRED: 'Ya no se puede deshacer',
+  BOARD_CREATION_DISABLED: 'La creación de tableros está desactivada',
+  BOARD_CREATION_LIMITED: 'Demasiados tableros creados',
   NOT_FOUND: 'Recurso no encontrado',
   RATE_LIMITED: 'Demasiadas peticiones',
   SERVICE_UNAVAILABLE: 'Servicio no disponible',
@@ -26,6 +28,8 @@ const DOMAIN_STATUS: Record<DomainError['code'], number> = {
   PERSON_NAME_TAKEN: 409,
   ID_CONFLICT: 409,
   UNDO_EXPIRED: 410,
+  // El tablero del código se borró entre la autenticación y la escritura (FR-116).
+  BOARD_NOT_FOUND: 401,
 };
 
 export interface ProblemExtras {
@@ -58,6 +62,10 @@ export class DomainFailure extends Error {
 }
 
 export const domainStatus = (error: DomainError): number => DOMAIN_STATUS[error.code];
+
+/** Código HTTP estable; un tablero inexistente responde igual que un enlace no válido (FR-028c). */
+export const domainCode = (error: DomainError): ErrorCode =>
+  error.code === 'BOARD_NOT_FOUND' ? 'INVALID_LINK' : error.code;
 
 export const domainExtras = (error: DomainError): ProblemExtras =>
   error.code === 'VALIDATION_ERROR' ? { errors: error.issues.map((i) => ({ ...i })) } : {};

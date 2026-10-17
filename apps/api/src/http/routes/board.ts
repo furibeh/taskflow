@@ -1,5 +1,11 @@
 import { BoardSchema, RegenerateAccessCodeResponseSchema } from '@taskflow/contracts';
-import { regenerateAccessCode, type AccessCodeService, type BoardRepository, type Clock } from '@taskflow/domain';
+import {
+  getBoardDetails,
+  regenerateAccessCode,
+  type AccessCodeService,
+  type BoardRepository,
+  type Clock,
+} from '@taskflow/domain';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { currentBoard } from '../plugins/auth';
 
@@ -11,8 +17,14 @@ export interface BoardRouteDeps {
 
 export const boardRoutes: FastifyPluginAsyncZod<{ deps: BoardRouteDeps }> = async (app, { deps }) => {
   app.get('/board', { schema: { response: { 200: BoardSchema } } }, async (request) => {
-    const board = currentBoard(request);
-    return { id: board.id, accessCodeRotatedAt: board.accessCodeRotatedAt.toISOString() };
+    const board = await getBoardDetails(deps, currentBoard(request));
+    return {
+      id: board.id,
+      name: board.name,
+      accessCodeRotatedAt: board.accessCodeRotatedAt.toISOString(),
+      taskCount: board.taskCount,
+      personCount: board.personCount,
+    };
   });
 
   // El código nuevo solo se devuelve en esta respuesta, que no debe guardarse en cachés (FR-028b).
