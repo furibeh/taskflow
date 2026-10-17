@@ -312,19 +312,19 @@ borrarla de nuevo y esperar 10 s; no vuelve tras recargar.
 
 ### Enlace secreto (FR-028b)
 
-- [ ] T124 [P] Write API tests in `apps/api/tests/integration/regenerate-link.test.ts`: `POST /api/v1/board/access-code/regenerate` → 200 with new 43-char code and `Cache-Control: no-store`; old code → 401 `INVALID_LINK` immediately; new code works; neither the response headers nor any captured log line contain the old or new code; `Content-Security-Policy` includes `connect-src 'self'` (no third-party requests); contract validation
-- [ ] T125 Implement route `POST /api/v1/board/access-code/regenerate` in `apps/api/src/http/routes/board.ts`; T124 must pass
-- [ ] T126 Implement `ShareLinkDialog` in `apps/web/src/features/access/ShareLinkDialog.tsx`: shows the current link with "Copiar enlace"; "Regenerar enlace" requires confirmation explaining that the old link stops working; on success updates the code with `setAccessCode` and shows the new link to copy; add "Compartir" button in `apps/web/src/app/App.tsx`
-- [ ] T127 [P] Write E2E test in `e2e/tests/access.spec.ts`: wrong code shows "Enlace no válido" with no data; regenerating in one context makes the other context show "Enlace no válido" on its next action
+- [X] T124 [P] Write API tests in `apps/api/tests/integration/regenerate-link.test.ts`: `POST /api/v1/board/access-code/regenerate` → 200 with new 43-char code and `Cache-Control: no-store`; old code → 401 `INVALID_LINK` immediately; new code works; neither the response headers nor any captured log line contain the old or new code; `Content-Security-Policy` includes `connect-src 'self'` (no third-party requests); contract validation
+- [X] T125 Implement route `POST /api/v1/board/access-code/regenerate` in `apps/api/src/http/routes/board.ts`; T124 must pass
+- [X] T126 Implement `ShareLinkDialog` in `apps/web/src/features/access/ShareLinkDialog.tsx`: shows the current link with "Copiar enlace"; "Regenerar enlace" requires confirmation explaining that the old link stops working; on success updates the code with `setAccessCode` and shows the new link to copy; add "Compartir" button in `apps/web/src/app/App.tsx`
+- [X] T127 [P] Write E2E test in `e2e/tests/access.spec.ts`: wrong code shows "Enlace no válido" with no data; regenerating in one context makes the other context show "Enlace no válido" on its next action
 
 ### Calidad transversal
 
-- [ ] T128 [P] Write E2E accessibility and responsive suite in `e2e/tests/a11y-responsive.spec.ts`: axe scan with WCAG 2.1 AA tags on board, dialogs and toasts; at 320 px `document.documentElement.scrollWidth <= clientWidth`; all interactive elements ≥ 44×44 px; full keyboard pass of create, status change, assign, filter, delete/undo
-- [ ] T129 [P] Write E2E performance check in `e2e/tests/performance.spec.ts`: seed 200 tasks via API, then board load, search, filter and status change each reflect in < 1 s (SC-003)
-- [ ] T130 [P] Write E2E resilience test in `e2e/tests/save-failure.spec.ts`: for create, edit, assign, delete and add-person, aborted request → no change on board, typed values kept, "Reintentar" works once; delayed response > 10 s → timeout error; retrying a create after timeout yields exactly one task (FR-011, FR-021a, SC-008)
-- [ ] T131 [P] Handle `RATE_LIMITED` globally in `apps/web/src/api/client.ts` and `apps/web/src/ui/ErrorAlert.tsx` with message "Demasiadas acciones seguidas. Espera unos segundos."
-- [ ] T132 [P] Write `README.md` at the repository root: purpose, prerequisites, link to `specs/001-kanban-task-board/quickstart.md`, scripts, and security notes (link is a secret, how to rotate, backups pending for deployment)
-- [ ] T133 Run `npm run lint`, `npm run lint:deps`, `npm run typecheck`, `npm test`, `npm run test:e2e` and `npm audit --audit-level=high`; fix any failure (no task is done while tests fail)
+- [X] T128 [P] Write E2E accessibility and responsive suite in `e2e/tests/a11y-responsive.spec.ts`: axe scan with WCAG 2.1 AA tags on board, dialogs and toasts; at 320 px `document.documentElement.scrollWidth <= clientWidth`; all interactive elements ≥ 44×44 px; full keyboard pass of create, status change, assign, filter, delete/undo
+- [X] T129 [P] Write E2E performance check in `e2e/tests/performance.spec.ts`: seed 200 tasks via API, then board load, search, filter and status change each reflect in < 1 s (SC-003)
+- [X] T130 [P] Write E2E resilience test in `e2e/tests/save-failure.spec.ts`: for create, edit, assign, delete and add-person, aborted request → no change on board, typed values kept, "Reintentar" works once; delayed response > 10 s → timeout error; retrying a create after timeout yields exactly one task (FR-011, FR-021a, SC-008)
+- [X] T131 [P] Handle `RATE_LIMITED` globally in `apps/web/src/api/client.ts` and `apps/web/src/ui/ErrorAlert.tsx` with message "Demasiadas acciones seguidas. Espera unos segundos."
+- [X] T132 [P] Write `README.md` at the repository root: purpose, prerequisites, link to `specs/001-kanban-task-board/quickstart.md`, scripts, and security notes (link is a secret, how to rotate, backups pending for deployment)
+- [X] T133 Run `npm run lint`, `npm run lint:deps`, `npm run typecheck`, `npm test`, `npm run test:e2e` and `npm audit --audit-level=high`; fix any failure (no task is done while tests fail)
 - [ ] T134 Run the manual validation in `specs/001-kanban-task-board/quickstart.md` (sections 1–6) plus a manual screen reader review (NVDA or VoiceOver) of create, status change, drag and drop, assign, filter and delete/undo against WCAG 2.1 AA (SC-006), and record results in `specs/001-kanban-task-board/checklists/quickstart-run.md`
 
 ---

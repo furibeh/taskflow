@@ -18,7 +18,7 @@ const dateFormat = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeSty
 interface TaskDetailDialogProps {
   readonly task: TaskDto | null;
   readonly onClose: () => void;
-  readonly onDeleted: (task: TaskDto) => void;
+  readonly onDeleted: (task: TaskDto, viaKeyboard: boolean) => void;
 }
 
 /** Detalle completo de una tarea (FR-005). */
@@ -101,9 +101,9 @@ export const TaskDetailDialog = ({ task: initial, onClose, onDeleted }: TaskDeta
               <DeleteTaskConfirm
                 task={task}
                 onCancel={() => setMode('view')}
-                onDeleted={(deleted) => {
+                onDeleted={(deleted, viaKeyboard) => {
                   setMode('view');
-                  onDeleted(deleted);
+                  onDeleted(deleted, viaKeyboard);
                 }}
               />
             ) : (

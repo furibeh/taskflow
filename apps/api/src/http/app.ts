@@ -63,7 +63,9 @@ export const buildApp = async (deps: AppDeps): Promise<FastifyInstance> => {
             accessCodes: nodeAccessCodeService,
             unauthorizedPerMinute: rateLimits?.unauthorized ?? null,
           });
-          await v1.register(boardRoutes);
+          await v1.register(boardRoutes, {
+            deps: { boards, accessCodes: nodeAccessCodeService, clock: deps.clock },
+          });
           await v1.register(taskRoutes, { deps: taskDeps });
           await v1.register(peopleRoutes, { deps: peopleDeps });
         },

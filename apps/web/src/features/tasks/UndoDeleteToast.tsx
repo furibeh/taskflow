@@ -10,6 +10,8 @@ import { Toast } from '../../ui/Toast';
 
 interface UndoDeleteToastProps {
   readonly task: TaskDto;
+  /** Llevar el foco a "Deshacer" (cuando se borró con el teclado). */
+  readonly focusOnShow: boolean;
   readonly onDone: () => void;
 }
 
@@ -18,12 +20,20 @@ interface UndoDeleteToastProps {
  * foco al cumplirse, sigue visible pero el botón queda inactivo y se anuncia; se oculta al
  * expirar o al perder el foco, lo que ocurra después.
  */
-export const UndoDeleteToast = ({ task, onDone }: UndoDeleteToastProps) => {
+export const UndoDeleteToast = ({ task, focusOnShow, onDone }: UndoDeleteToastProps) => {
   const [expired, setExpired] = useState(false);
   const focused = useRef(false);
+  const button = useRef<HTMLButtonElement>(null);
   const restore = useRestoreTask();
   const announce = useAnnounce();
   const feedback = useOperationFeedback();
+
+  // Si se borró con el teclado, el diálogo de origen se cerró y su tarjeta ya no existe: el foco
+  // va a "Deshacer" para que se pueda alcanzar dentro del plazo. Con ratón no se mueve el foco y
+  // el aviso desaparece a los 10 s.
+  useEffect(() => {
+    if (focusOnShow) button.current?.focus();
+  }, [focusOnShow]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -53,6 +63,7 @@ export const UndoDeleteToast = ({ task, onDone }: UndoDeleteToastProps) => {
       action={
         // aria-disabled (no disabled) para no robar el foco: así el aviso se cierra al perderlo.
         <Button
+          ref={button}
           variant="primary"
           onClick={() => !expired && !restore.isPending && undo()}
           aria-disabled={expired || restore.isPending}

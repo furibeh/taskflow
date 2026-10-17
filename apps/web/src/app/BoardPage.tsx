@@ -10,7 +10,8 @@ import { useFilters } from '../features/filters/useFilters';
 import { CreateTaskForm } from '../features/tasks/CreateTaskForm';
 import { TaskDetailDialog } from '../features/tasks/TaskDetailDialog';
 import { UndoDeleteToast } from '../features/tasks/UndoDeleteToast';
-import { es } from '../i18n/es';
+import { ApiError } from '../api/client';
+import { errorMessage, es } from '../i18n/es';
 import { ErrorAlert } from '../ui/ErrorAlert';
 import { OperationError, OperationFeedbackProvider } from '../ui/OperationFeedback';
 
@@ -21,7 +22,7 @@ export const BoardPage = () => {
   const people = usePeople();
   const queryClient = useQueryClient();
   const [openTask, setOpenTask] = useState<TaskDto | null>(null);
-  const [lastDeleted, setLastDeleted] = useState<TaskDto | null>(null);
+  const [lastDeleted, setLastDeleted] = useState<{ task: TaskDto; viaKeyboard: boolean } | null>(null);
   const dismissUndo = useCallback(() => setLastDeleted(null), []);
   // Aviso ligado a la consulta en la que se creó la tarea: desaparece al cambiar los filtros.
   const [hiddenNoticeFor, setHiddenNoticeFor] = useState<typeof filters.query | null>(null);
@@ -56,7 +57,16 @@ export const BoardPage = () => {
         <FiltersBar filters={filters} />
         <OperationError />
         {tasks.isPending && <p>{es.loading}</p>}
-        {tasks.isError && <ErrorAlert message={es.loadError} onRetry={() => void tasks.refetch()} />}
+        {tasks.isError && (
+          <ErrorAlert
+            message={
+              tasks.error instanceof ApiError && tasks.error.code === 'RATE_LIMITED'
+                ? errorMessage('RATE_LIMITED')
+                : es.loadError
+            }
+            onRetry={() => void tasks.refetch()}
+          />
+        )}
         {items && (
           <>
             {items.length === 0 && !filters.isActive && <p className="page__empty">{es.board.emptyBoard}</p>}
@@ -70,12 +80,19 @@ export const BoardPage = () => {
         <TaskDetailDialog
           task={openTask}
           onClose={() => setOpenTask(null)}
-          onDeleted={(task) => {
+          onDeleted={(task, viaKeyboard) => {
             setOpenTask(null);
-            setLastDeleted(task);
+            setLastDeleted({ task, viaKeyboard });
           }}
         />
-        {lastDeleted && <UndoDeleteToast key={lastDeleted.id} task={lastDeleted} onDone={dismissUndo} />}
+        {lastDeleted && (
+          <UndoDeleteToast
+            key={lastDeleted.task.id}
+            task={lastDeleted.task}
+            focusOnShow={lastDeleted.viaKeyboard}
+            onDone={dismissUndo}
+          />
+        )}
       </main>
     </OperationFeedbackProvider>
   );
