@@ -159,3 +159,41 @@ describe('borrado con el teclado', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Deshacer' })).toHaveFocus());
   });
 });
+
+describe('la tarea ya no existe (T143, FR-013b)', () => {
+  const setup = async () => {
+    const user = userEvent.setup();
+    const server = createFakeServer();
+    server.addTask({ title: 'Preparar demo' });
+    renderApp(server);
+    await user.click(await screen.findByRole('button', { name: 'Preparar demo' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Preparar demo' });
+    // Otra persona la borra mientras está abierta.
+    server.tasks.splice(0, 1);
+    return { user, dialog };
+  };
+
+  const expectGone = async () => {
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Esta tarea ya no existe.');
+    expect(within(alert).queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('article')).not.toBeInTheDocument());
+  };
+
+  it('al guardar una edición: avisa, cierra el detalle y recarga el tablero', async () => {
+    const { user, dialog } = await setup();
+    await user.click(within(dialog).getByRole('button', { name: 'Editar' }));
+    await user.type(within(dialog).getByLabelText('Título'), ' final');
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar' }));
+    await expectGone();
+  });
+
+  it('al confirmar el borrado: avisa, cierra el detalle y recarga el tablero', async () => {
+    const { user, dialog } = await setup();
+    await user.click(within(dialog).getByRole('button', { name: 'Borrar' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Borrar tarea' }));
+    await expectGone();
+    expect(screen.queryByText('Tarea borrada')).not.toBeInTheDocument();
+  });
+});

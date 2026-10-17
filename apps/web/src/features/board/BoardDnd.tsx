@@ -19,9 +19,12 @@ import { useMoveTask } from './useMoveTask';
 const statusLabel = (id: unknown): string =>
   typeof id === 'string' && id in STATUS_LABELS ? STATUS_LABELS[id as TaskStatusDto] : '';
 
+const originLabel = (active: { data: { current?: Record<string, unknown> | undefined } }): string =>
+  statusLabel((active.data.current?.task as TaskDto | undefined)?.status);
+
 // Anuncios en español para el arrastre con puntero (el teclado usa su propio modo).
-const announcements: Announcements = {
-  onDragStart: () => es.move.pickedUp(''),
+export const dragAnnouncements: Announcements = {
+  onDragStart: ({ active }) => es.move.pickedUp(originLabel(active)),
   onDragOver: ({ over }) => (over ? es.move.over(statusLabel(over.id)) : undefined),
   onDragEnd: ({ over }) => (over ? es.move.dropped(statusLabel(over.id)) : es.move.cancelled),
   onDragCancel: () => es.move.cancelled,
@@ -124,7 +127,7 @@ export const BoardDnd = ({ enabled, children }: BoardDndProps) => {
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onDragCancel={() => setDragged(null)}
-        accessibility={{ announcements, screenReaderInstructions: { draggable: es.move.instructions } }}
+        accessibility={{ announcements: dragAnnouncements, screenReaderInstructions: { draggable: es.move.instructions } }}
       >
         {children}
         <DragOverlay>

@@ -11,10 +11,12 @@ interface DeleteTaskConfirmProps {
   readonly onCancel: () => void;
   /** viaKeyboard: la confirmación se hizo con el teclado (para decidir adónde va el foco). */
   readonly onDeleted: (task: TaskDto, viaKeyboard: boolean) => void;
+  /** La tarea ya no existe (borrada por otra persona): no tiene sentido reintentar. */
+  readonly onGone: () => void;
 }
 
 /** Confirmación explícita con el título de la tarea antes de borrar (FR-013a). */
-export const DeleteTaskConfirm = ({ task, onCancel, onDeleted }: DeleteTaskConfirmProps) => {
+export const DeleteTaskConfirm = ({ task, onCancel, onDeleted, onGone }: DeleteTaskConfirmProps) => {
   const remove = useDeleteTask();
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -24,7 +26,11 @@ export const DeleteTaskConfirm = ({ task, onCancel, onDeleted }: DeleteTaskConfi
     setFailure(null);
     remove.mutate(task.id, {
       onSuccess: () => onDeleted(task, viaKeyboard),
-      onError: (error) => setFailure(errorMessage(error instanceof ApiError ? error.code : 'INTERNAL_ERROR')),
+      onError: (error) => {
+        const code = error instanceof ApiError ? error.code : 'INTERNAL_ERROR';
+        if (code === 'TASK_NOT_FOUND') return onGone();
+        setFailure(errorMessage(code));
+      },
     });
   };
 

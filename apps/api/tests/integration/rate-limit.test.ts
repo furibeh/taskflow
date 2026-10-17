@@ -77,7 +77,11 @@ describe('límites de peticiones (D5)', () => {
         app.inject({ method: 'GET', url: '/api/v1/board', headers: { authorization: 'Bearer incorrecto' } });
       expect((await bad()).statusCode).toBe(401);
       expect((await bad()).statusCode).toBe(401);
-      expect((await bad()).statusCode).toBe(429);
+      const blocked = await bad();
+      expect(blocked.statusCode).toBe(429);
+      expect(Number(blocked.headers['retry-after'])).toBeGreaterThan(0);
+      expect(Number(blocked.headers['retry-after'])).toBeLessThanOrEqual(60);
+      expectMatchesContract('getBoard', 429, blocked.json());
       // Ni siquiera un código válido pasa mientras dura el bloqueo (frena la fuerza bruta).
       const good = await app.inject({ method: 'GET', url: '/api/v1/board', headers: t.authHeader() });
       expect(good.statusCode).toBe(429);

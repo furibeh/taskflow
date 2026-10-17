@@ -55,6 +55,7 @@
   background: var(--color-surface);
 }
 .card__title {
+  width: 100%;
   min-height: var(--tap-size);
   padding: 0;
   border: 0;

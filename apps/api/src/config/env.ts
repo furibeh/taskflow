@@ -1,4 +1,15 @@
+import { isIP } from 'node:net';
 import { z } from 'zod';
+
+/** IP o rango CIDR válido (IPv4 o IPv6). */
+const isAddressOrCidr = (value: string): boolean => {
+  const [address = '', prefix, ...rest] = value.split('/');
+  const version = isIP(address);
+  if (version === 0 || rest.length > 0) return false;
+  if (prefix === undefined) return true;
+  if (!/^\d{1,3}$/.test(prefix)) return false;
+  return Number(prefix) <= (version === 4 ? 32 : 128);
+};
 
 const EnvSchema = z.object({
   DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\//, 'debe ser una URL postgres://'),
@@ -10,6 +21,14 @@ const EnvSchema = z.object({
   RATE_LIMIT_GLOBAL: z.coerce.number().int().min(1).max(100_000).default(300),
   RATE_LIMIT_WRITES: z.coerce.number().int().min(1).max(100_000).default(60),
   RATE_LIMIT_UNAUTHORIZED: z.coerce.number().int().min(1).max(100_000).default(20),
+  // Proxies cuya cabecera X-Forwarded-For se acepta para conocer la IP real del cliente (plan
+  // D11). Solo IP o rangos CIDR explícitos: nunca "true", "*" ni un número de saltos, para que un
+  // cliente conectado directamente no pueda suplantar su IP. Vacío = no se confía en ninguno.
+  TRUST_PROXY: z
+    .string()
+    .default('')
+    .transform((value) => (value.trim() === '' ? [] : value.split(',').map((v) => v.trim())))
+    .refine((list) => list.every(isAddressOrCidr), 'debe ser una lista de IP o rangos CIDR'),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

@@ -17,6 +17,12 @@ export class FixedWindowLimiter {
     return this.current(key).count >= this.max;
   }
 
+  /** Segundos que faltan para que se reinicie la ventana de `key` (para Retry-After). */
+  retryAfterSeconds(key: string): number {
+    const window = this.current(key);
+    return Math.max(1, Math.ceil((window.start + this.windowMs - this.now()) / 1000));
+  }
+
   private current(key: string): { start: number; count: number } {
     const now = this.now();
     let window = this.windows.get(key);

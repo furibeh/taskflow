@@ -46,6 +46,8 @@ export default defineConfig({
             RATE_LIMIT_GLOBAL: '10000',
             RATE_LIMIT_WRITES: '10000',
             RATE_LIMIT_UNAUTHORIZED: '1000',
+            // El proxy de Vite de los E2E corre en la misma máquina.
+            TRUST_PROXY: '127.0.0.1,::1',
           },
         },
         {

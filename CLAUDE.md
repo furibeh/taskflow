@@ -6,8 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TaskFlow (tablero kanban compartido para equipos pequeños) se implementa por fases siguiendo
 `specs/001-kanban-task-board/tasks.md` (T001–T134, por historia de usuario, pruebas primero;
-las tareas hechas están marcadas `[X]`). Implementado: fases 1–3 (infraestructura, base común y
-US1: ver el tablero y crear tareas). Rama de trabajo: `001-kanban-task-board`.
+las tareas hechas están marcadas `[X]`). Implementadas todas las fases (US1–US6, acabado y
+convergencia); solo queda la revisión manual con lector de pantalla de T134. Rama de trabajo:
+`001-kanban-task-board`. Decisiones de arquitectura/seguridad aprobadas: D1–D11 de `plan.md`.
 
 Idioma: la documentación, los textos de la UI y los mensajes de commit están en español.
 
@@ -73,6 +74,11 @@ Comportamientos transversales que no se deducen de un solo archivo:
 - **Concurrencia**: gana el último guardado; operar sobre una tarea borrada da
   `404 TASK_NOT_FOUND` y la web recarga el tablero.
 - `board_id` existe en todas las tablas aunque v1 tenga un único tablero.
+- **Límites por IP detrás del proxy**: la API solo acepta `X-Forwarded-For` de las IP/CIDR de
+  `TRUST_PROXY` (Compose fija la IP del contenedor web). No uses `trustProxy: true` ni saltos.
+- **Arrastrar y soltar**: dnd-kit para ratón/táctil; el teclado usa un modo propio en el asa
+  "Mover «título»" (no el `KeyboardSensor`). Todas las vías llaman a `useMoveTask`, que vive en
+  el tablero para que sus avisos no se pierdan al desmontarse la tarjeta.
 
 ## Comandos (definidos en el plan)
 

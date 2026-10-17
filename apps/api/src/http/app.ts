@@ -26,6 +26,8 @@ export interface AppDeps {
   readonly logger?: FastifyServerOptions['logger'];
   /** null desactiva los límites; solo lo usan las pruebas en proceso, nunca la configuración. */
   readonly rateLimits?: RateLimits | null;
+  /** IP o rangos CIDR de los proxies de confianza (X-Forwarded-For). Vacío = ninguno. */
+  readonly trustProxy?: readonly string[];
 }
 
 export const BODY_LIMIT_BYTES = 16 * 1024;
@@ -39,7 +41,8 @@ export const buildApp = async (deps: AppDeps): Promise<FastifyInstance> => {
     logger: deps.logger ?? false,
     bodyLimit: BODY_LIMIT_BYTES,
     genReqId: () => randomUUID(),
-    trustProxy: false,
+    // Solo se acepta X-Forwarded-For de proxies declarados explícitamente (plan D11).
+    trustProxy: deps.trustProxy && deps.trustProxy.length > 0 ? [...deps.trustProxy] : false,
   }).withTypeProvider<ZodTypeProvider>();
 
   app.setValidatorCompiler(validatorCompiler);

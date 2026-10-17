@@ -118,6 +118,18 @@ según la constitución, requieren aprobación explícita antes de implementarse
 - **Decisión**:
   - `@fastify/rate-limit` por IP: 300 peticiones/min en total y 60 escrituras/min; las
     respuestas `401` cuentan contra un límite de 20/min por IP para frenar fuerza bruta.
+  - Los tres valores se configuran con `RATE_LIMIT_GLOBAL`, `RATE_LIMIT_WRITES` y
+    `RATE_LIMIT_UNAUTHORIZED` (por defecto 300/60/20). Se pueden subir (los E2E usan valores
+    holgados), pero **nunca desactivar**: el mínimo es 1 y la API no arranca con `0` u otros
+    valores no numéricos. Decidido por el usuario el 2026-10-17 (opción A), en lugar de un
+    interruptor que los apagara.
+  - **IP real detrás del proxy (D11)**: el proxy de la web añade `X-Forwarded-For` y la API
+    solo lo acepta si la conexión llega desde una IP/CIDR de `TRUST_PROXY` (en Compose, la IP
+    fija `172.28.0.10` del contenedor web). Sin ello, todos los usuarios compartían la IP del
+    proxy y 20 fallos de cualquiera bloqueaban a todo el equipo. Alternativas descartadas:
+    confiar en cualquier `X-Forwarded-For` o en N saltos (suplantable por quien se conecte
+    directamente a la API) y no bloquear códigos válidos tras fallos (seguiría compartiendo
+    los límites).
   - `@fastify/helmet` con CSP estricta (`default-src 'self'`), `X-Content-Type-Options`,
     `frame-ancestors 'none'`.
   - Tamaño máximo de cuerpo: 16 KiB.

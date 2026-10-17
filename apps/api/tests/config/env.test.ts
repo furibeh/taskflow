@@ -26,4 +26,24 @@ describe('configuración de límites de peticiones', () => {
     expect(exit).toHaveBeenCalledWith(1);
     expect(log.mock.calls.join(' ')).not.toContain('postgres://');
   });
+
+  it('TRUST_PROXY acepta una lista explícita de IP o rangos CIDR', () => {
+    expect(loadEnv({ ...base }).TRUST_PROXY).toEqual([]);
+    expect(loadEnv({ ...base, TRUST_PROXY: '127.0.0.1, ::1,172.28.0.0/24' }).TRUST_PROXY).toEqual([
+      '127.0.0.1',
+      '::1',
+      '172.28.0.0/24',
+    ]);
+  });
+
+  it.each(['true', '*', '1', 'loopback', '10.0.0.0/99', '127.0.0.1,'])(
+    'TRUST_PROXY rechaza valores que confiarían demasiado (%s)',
+    (value) => {
+      vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+        throw new Error(`exit ${code}`);
+      }) as never);
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      expect(() => loadEnv({ ...base, TRUST_PROXY: value })).toThrow('exit 1');
+    },
+  );
 });
