@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { expectNoAxeViolations } from '../axe';
@@ -8,6 +8,7 @@ import { renderApp } from '../support/render-app';
 
 const column = (name: string) => screen.getByRole('region', { name: new RegExp(`^${name}`) });
 const live = () => screen.getByTestId('live-region');
+const pointer = (clientX: number, clientY: number) => ({ clientX, clientY, button: 0, isPrimary: true });
 
 describe('mover tarjetas arrastrando con el teclado (US2, FR-019a)', () => {
   it('Espacio coge, flechas eligen columna, Espacio suelta; cada paso se anuncia', async () => {
@@ -74,6 +75,39 @@ describe('mover tarjetas arrastrando con el teclado (US2, FR-019a)', () => {
     await user.selectOptions(await screen.findByRole('combobox', { name: /Estado de/ }), 'done');
     expect(await screen.findByRole('button', { name: 'Mover «Preparar demo»' })).toBeDisabled();
     release();
+  });
+
+  it('pulsar y mover el puntero sobre la tarjeta inicia el arrastre (control de la prueba siguiente)', async () => {
+    const server = createFakeServer();
+    server.addTask({ title: 'Preparar demo' });
+    renderApp(server);
+
+    const card = (await screen.findByRole('button', { name: 'Preparar demo' })).closest('article')!;
+    fireEvent.pointerDown(card.querySelector('.card__assignee')!, pointer(10, 10));
+    fireEvent.pointerMove(document, pointer(60, 10));
+
+    await waitFor(() => expect(card).toHaveClass('card--dragging'));
+    fireEvent.pointerUp(document, pointer(60, 10));
+  });
+
+  it('cambiar el estado con el selector no deja la tarjeta lista para arrastrarse (#11)', async () => {
+    const server = createFakeServer();
+    server.addTask({ title: 'Preparar demo' });
+    renderApp(server);
+
+    const select = await screen.findByRole('combobox', { name: /Estado de/ });
+    // El desplegable nativo se queda con el pointerup: solo llega el pointerdown y el change
+    // (user.selectOptions simularía también el pointerup y ocultaría el bug).
+    fireEvent.pointerDown(select, pointer(10, 10));
+    fireEvent.change(select, { target: { value: 'in_progress' } });
+    await waitFor(() =>
+      expect(within(column('En progreso')).getByRole('button', { name: 'Preparar demo' })).toBeInTheDocument(),
+    );
+
+    fireEvent.pointerMove(document, pointer(80, 40));
+    const card = screen.getByRole('button', { name: 'Preparar demo' }).closest('article')!;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(card).not.toHaveClass('card--dragging');
   });
 
   it('por debajo de 768 px no se ofrece arrastrar', async () => {

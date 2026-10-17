@@ -89,8 +89,8 @@ docker compose up -d db-test           # PostgreSQL de pruebas (puerto 5433), ne
 
 npm test                               # dominio + contracts + API + web
 npm test -w packages/domain            # un solo paquete
-npx vitest run <ruta/al/archivo.test.ts> -w apps/api   # un solo archivo
-npx vitest run -t "<nombre del test>" -w packages/domain
+npm test -w apps/api -- <ruta/al/archivo.test.ts>   # un solo archivo (ruta relativa al paquete)
+npm test -w packages/domain -- -t "<nombre del test>"
 npm run test:e2e                       # Playwright (desktop y mobile-320, con axe); requiere db-test
 npx playwright install chromium        # una vez, desde e2e/
 npm run lint && npm run lint:deps && npm run typecheck
@@ -99,6 +99,9 @@ npm run db:migrate -w apps/api         # aplicar migraciones
 npm run db:migrate:down -w apps/api    # revertir una
 npm run board:rotate -w apps/api       # regenerar el enlace si se pierde
 ```
+
+No pases `-w` a `npx vitest`: vitest lo interpreta como `--watch` y el proceso se queda esperando
+indefinidamente. Selecciona el paquete con `npm test -w <paquete> -- <argumentos de vitest>`.
 
 Las pruebas de `apps/api` usan una PostgreSQL real compartida (`TEST_DATABASE_URL`) y se
 ejecutan con `fileParallelism: false`; no las paralelices entre archivos.

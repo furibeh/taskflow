@@ -452,3 +452,10 @@ Task: "T090 People schemas in packages/contracts/src/people.ts"
 - [X] T144 On `PERSON_NOT_FOUND` when removing a person, show "Esta persona ya no está en el equipo." and refetch people and tasks in `apps/web/src/features/people/PeopleDialog.tsx`, with a test in `apps/web/tests/people/people-dialog.test.tsx` per plan: error table (partial)
 - [X] T145 Announce the real origin column when a pointer/touch drag starts (instead of "Columna actual: .") in `apps/web/src/features/board/BoardDnd.tsx` per FR-019a (partial)
 - [X] T146 Declare the `400` response (invalid UUID) for `deleteTask`, `restoreTask` and `deletePerson` in `specs/001-kanban-task-board/contracts/openapi.yaml` and validate them in `apps/api/tests/contract/` per plan: contracts (partial)
+
+---
+
+## Phase 12: Correcciones (issues)
+
+- [X] T147 [US2] Regression test (must fail before T148): after pressing the pointer on the status select and changing the status, moving the pointer does not start a drag of the card, in `apps/web/tests/board/drag-and-drop.test.tsx` per spec edge case "Controles dentro de la tarjeta" (#11)
+- [X] T148 [US2] Stop `pointerdown`/`touchstart` propagation from the status select so the card's dnd-kit listeners never arm a drag from it, in `apps/web/src/features/tasks/StatusSelect.tsx` per spec edge case "Controles dentro de la tarjeta" (#11)

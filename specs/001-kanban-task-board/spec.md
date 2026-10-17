@@ -278,6 +278,9 @@ sin asignar.
   pulsada la tarjeta ~250 ms, para no interferir con el desplazamiento de la página.
 - **Arrastrar una tarjeta que está guardando**: no se permite; la tarjeta no es arrastrable
   hasta que termina su guardado anterior.
+- **Controles dentro de la tarjeta**: usar el selector de estado (u otro control interactivo
+  de la tarjeta) nunca inicia un arrastre; tras cambiar el estado con el selector, mover el
+  puntero no arrastra la tarjeta.
 - **Pantallas estrechas con columnas en pestañas**: el arrastrar y soltar no se ofrece porque
   solo hay una columna visible; se usa el control de estado.
 - **Nombres de persona duplicados**: no se permiten dos personas con el mismo nombre visible

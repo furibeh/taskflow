@@ -24,6 +24,10 @@ export const StatusSelect = ({ task, saving }: StatusSelectProps) => {
         value={task.status}
         disabled={saving}
         onChange={(e) => move(task, e.target.value as TaskStatusDto)}
+        // El desplegable nativo se queda con el pointerup: si el pointerdown llegara a los
+        // listeners de arrastre de la tarjeta, el arrastre quedaría pendiente (#11).
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
       >
         {TASK_STATUSES.map((status) => (
           <option key={status} value={status}>
