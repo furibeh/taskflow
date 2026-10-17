@@ -16,6 +16,7 @@ const app = await buildApp({
     writes: env.RATE_LIMIT_WRITES,
     unauthorized: env.RATE_LIMIT_UNAUTHORIZED,
   },
+  trustProxy: env.TRUST_PROXY,
 });
 
 const stopPurge = startPurgeJob({ tasks: new KyselyTaskRepository(db), clock: systemClock }, app.log);

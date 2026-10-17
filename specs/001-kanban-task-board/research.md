@@ -123,6 +123,13 @@ según la constitución, requieren aprobación explícita antes de implementarse
     holgados), pero **nunca desactivar**: el mínimo es 1 y la API no arranca con `0` u otros
     valores no numéricos. Decidido por el usuario el 2026-10-17 (opción A), en lugar de un
     interruptor que los apagara.
+  - **IP real detrás del proxy (D11)**: el proxy de la web añade `X-Forwarded-For` y la API
+    solo lo acepta si la conexión llega desde una IP/CIDR de `TRUST_PROXY` (en Compose, la IP
+    fija `172.28.0.10` del contenedor web). Sin ello, todos los usuarios compartían la IP del
+    proxy y 20 fallos de cualquiera bloqueaban a todo el equipo. Alternativas descartadas:
+    confiar en cualquier `X-Forwarded-For` o en N saltos (suplantable por quien se conecte
+    directamente a la API) y no bloquear códigos válidos tras fallos (seguiría compartiendo
+    los límites).
   - `@fastify/helmet` con CSP estricta (`default-src 'self'`), `X-Content-Type-Options`,
     `frame-ancestors 'none'`.
   - Tamaño máximo de cuerpo: 16 KiB.

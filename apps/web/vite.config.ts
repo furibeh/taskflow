@@ -35,6 +35,8 @@ export default defineConfig({
       '/api': {
         target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
         changeOrigin: false,
+        // Envía la IP real del cliente; la API solo la acepta de este proxy (TRUST_PROXY, D11).
+        xfwd: true,
       },
     },
   },

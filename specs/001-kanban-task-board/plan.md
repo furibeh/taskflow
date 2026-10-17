@@ -62,7 +62,7 @@ horizontal; áreas táctiles ≥ 44×44 px; cuerpos de petición ≤ 16 KiB
 | VI. Migraciones | 4 migraciones Kysely versionadas con `up`/`down` probadas (data-model.md) | ✅ |
 | Seguridad y datos | Autorización por código en cada petición; errores sin detalles internos; dependencias fijadas y `npm audit` en CI (R7, R8, R14) | ✅ |
 | Definición de terminado | `npm test` + `npm run test:e2e` en verde son condición para cerrar cada tarea | ✅ |
-| Explicar decisiones de arquitectura/seguridad antes de aplicarlas | Sección **Decisiones que requieren aprobación** abajo (D1–D10) | ✅ Aprobadas por el usuario el 2026-10-17 |
+| Explicar decisiones de arquitectura/seguridad antes de aplicarlas | Sección **Decisiones que requieren aprobación** abajo (D1–D11) | ✅ Aprobadas por el usuario el 2026-10-17 |
 
 **Resultado**: sin violaciones. Decisiones D1–D10 aprobadas por el usuario el 2026-10-17; la
 puerta queda abierta para `/speckit-implement`.
@@ -180,6 +180,7 @@ alternativas evaluadas están en [research.md](./research.md).
 | D7 | ARQ | `board_id` en todas las tablas aunque v1 tenga un solo tablero | Evita migración de datos al añadir varios tableros o equipos | Una columna y un filtro extra por consulta |
 | D8 | ARQ | Filtrado y búsqueda en el servidor con `unaccent` (R12) | Una sola implementación de la regla; la UI no contiene lógica de negocio | Una petición por cambio de filtro (con *debounce* de 300 ms en la búsqueda) |
 | D9 | ARQ | Ids generados por el cliente para creaciones idempotentes (R10) | Reintentos tras timeout sin duplicados (FR-011) | El servidor debe rechazar ids repetidos con datos distintos |
+| D11 | SEG | IP real del cliente detrás del proxy: el proxy web envía `X-Forwarded-For` y la API solo lo acepta de las IP/CIDR declaradas en `TRUST_PROXY` (en Compose, la IP fija del contenedor web); sin la variable no se confía en ninguno (T135) | Los límites por IP distinguen clientes: 20 fallos de uno ya no bloquean a todo el equipo | Confiar en un rango demasiado amplio, o exponer la API directamente con un rango que incluya al cliente, permitiría suplantar la IP; por eso solo IP/CIDR explícitos (se rechazan `true`, `*` o saltos). Aprobada el 2026-10-17 |
 | D10 | ARQ | Arrastrar y soltar con `@dnd-kit/core`, solo con las tres columnas visibles (≥ 768 px), reutilizando la mutación de cambio de estado (R13, FR-019a) | Única opción mantenida que trae soporte de táctil, teclado y anuncios accesibles; no añade lógica de negocio a la UI | Nueva dependencia de frontend (~10 KB gzip); en móvil en pestañas solo existe el control explícito |
 
 **Fuera de alcance de este plan (anotado para el despliegue)**: copias de seguridad

@@ -10,6 +10,8 @@ services:
       - '5432:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+      - taskflow
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 2s
@@ -38,6 +40,8 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     command: sh -c "npm run db:migrate -w apps/api && npm run board:init -w apps/api"
+    networks:
+      - taskflow
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}
@@ -55,6 +59,10 @@ services:
       API_PORT: ${API_PORT:-3000}
       PUBLIC_WEB_URL: ${PUBLIC_WEB_URL}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Solo el contenedor web (IP fija) puede indicar la IP real del cliente (plan D11).
+      TRUST_PROXY: 172.28.0.10
+    networks:
+      - taskflow
     ports:
       - '${API_PORT:-3000}:${API_PORT:-3000}'
     depends_on:
@@ -68,10 +76,19 @@ services:
     environment:
       API_PROXY_TARGET: http://api:${API_PORT:-3000}
       VITE_HOST: 0.0.0.0
+    networks:
+      taskflow:
+        ipv4_address: 172.28.0.10
     ports:
       - '5173:5173'
     depends_on:
       - api
+
+networks:
+  taskflow:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
 
 volumes:
   db-data:

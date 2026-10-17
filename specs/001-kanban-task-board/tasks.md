@@ -435,7 +435,7 @@ Task: "T090 People schemas in packages/contracts/src/people.ts"
 
 ## Phase 10: Convergence
 
-- [ ] T135 Make per-IP rate limits identify the real client behind the web proxy: explain the approach (e.g. `TRUST_PROXY` env with the proxy's address, `xfwd: true` in the Vite proxy) and get user approval before applying it (Constitution: security decision), then configure `trustProxy` in `apps/api/src/http/app.ts` and `apps/web/vite.config.ts`, with a test proving that 20 failed attempts from one client do not block another client per plan: D5 (contradicts)
+- [X] T135 Make per-IP rate limits identify the real client behind the web proxy: explain the approach (e.g. `TRUST_PROXY` env with the proxy's address, `xfwd: true` in the Vite proxy) and get user approval before applying it (Constitution: security decision), then configure `trustProxy` in `apps/api/src/http/app.ts` and `apps/web/vite.config.ts`, with a test proving that 20 failed attempts from one client do not block another client per plan: D5 (contradicts)
 - [X] T136 Add a `Retry-After` header to the `429 RATE_LIMITED` response sent by the unauthorized-attempts limiter in `apps/api/src/http/plugins/auth.ts` and assert it in `apps/api/tests/integration/rate-limit.test.ts` per contracts/openapi.yaml `RateLimited` (partial)
 - [X] T137 Make the card title button span the full card width so every tap target is at least 44×44 px in `apps/web/src/features/board/board.css`, with a check in `e2e/tests/us1-board-create.spec.ts` per FR-033 (partial)
 - [X] T138 Define and apply a Content-Security-Policy for the web document (`default-src 'self'`, `connect-src 'self'`, `frame-ancestors 'none'`; dev-only relaxations for Vite HMR documented) in `apps/web/vite.config.ts` per plan: D5 (partial)
