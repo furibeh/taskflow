@@ -1,8 +1,11 @@
 import type { Task, TaskCriteria, TaskRepository, TaskView } from '@taskflow/domain';
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 import type { Database } from '../db';
 
 const UNIQUE_VIOLATION = '23505';
+
+/** Escapa los comodines de LIKE para que el texto se busque de forma literal. */
+const escapeLike = (text: string): string => text.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 const isUniqueViolation = (error: unknown): boolean =>
   typeof error === 'object' && error !== null && (error as { code?: string }).code === UNIQUE_VIOLATION;
@@ -38,8 +41,22 @@ export class KyselyTaskRepository implements TaskRepository {
     return row ? toView(row) : null;
   }
 
-  async list(boardId: string, _criteria: TaskCriteria): Promise<TaskView[]> {
-    const rows = await this.baseQuery(boardId)
+  async list(boardId: string, criteria: TaskCriteria): Promise<TaskView[]> {
+    let query = this.baseQuery(boardId);
+    if (criteria.assignee === 'unassigned') query = query.where('task.assignee_id', 'is', null);
+    else if (criteria.assignee) query = query.where('task.assignee_id', '=', criteria.assignee);
+    if (criteria.statuses?.length) query = query.where('task.status', 'in', [...criteria.statuses]);
+    if (criteria.text) {
+      // Búsqueda literal sin distinguir mayúsculas ni tildes (FR-024a, FR-024b, R12).
+      const pattern = `%${escapeLike(criteria.text)}%`;
+      query = query.where((eb) =>
+        eb.or([
+          eb(sql`unaccent(lower(task.title))`, 'like', sql`unaccent(lower(${pattern})) ESCAPE '\\'`),
+          eb(sql`unaccent(lower(task.description))`, 'like', sql`unaccent(lower(${pattern})) ESCAPE '\\'`),
+        ]),
+      );
+    }
+    const rows = await query
       .orderBy('task.created_at', 'desc')
       .orderBy('task.id', 'desc')
       .execute();

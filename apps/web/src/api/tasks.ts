@@ -5,17 +5,33 @@ import {
   type TaskDto,
   type UpdateTaskRequest,
 } from '@taskflow/contracts';
-import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useMutationState,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useApi } from './ApiContext';
 
 export const tasksKey = ['tasks'] as const;
 const taskKey = (id: string) => ['task', id] as const;
 
-export const useTasks = () => {
+export type TasksQuery = {
+  readonly assignee?: string;
+  readonly status?: readonly string[];
+  readonly q?: string;
+};
+
+export const tasksQueryKey = (query: TasksQuery) => [...tasksKey, query] as const;
+
+export const useTasks = (query: TasksQuery = {}) => {
   const api = useApi();
   return useQuery({
-    queryKey: tasksKey,
-    queryFn: () => api.request('/v1/tasks', { schema: ListTasksResponseSchema }),
+    queryKey: tasksQueryKey(query),
+    queryFn: () => api.request('/v1/tasks', { query, schema: ListTasksResponseSchema }),
+    // Al cambiar de filtro se mantiene el tablero anterior hasta tener el nuevo resultado.
+    placeholderData: keepPreviousData,
   });
 };
 

@@ -1,4 +1,4 @@
-import { DESCRIPTION_MAX, TASK_STATUSES, TITLE_MAX, TITLE_MIN } from '@taskflow/domain';
+import { DESCRIPTION_MAX, SEARCH_MAX, TASK_STATUSES, TITLE_MAX, TITLE_MIN } from '@taskflow/domain';
 import { z } from 'zod';
 import { boundedText } from './text';
 
@@ -60,3 +60,13 @@ export const UpdateTaskRequestSchema = z
     path: [],
   });
 export type UpdateTaskRequest = z.infer<typeof UpdateTaskRequestSchema>;
+
+const asArray = (value: unknown) => (value === undefined || Array.isArray(value) ? value : [value]);
+
+/** GET /tasks: assignee = UUID o "unassigned"; status repetible; q literal de hasta 100 caracteres. */
+export const ListTasksQuerySchema = z.strictObject({
+  assignee: z.union([z.uuid(), z.literal('unassigned')]).optional(),
+  status: z.preprocess(asArray, z.array(TaskStatusSchema).optional()),
+  q: boundedText({ min: 0, max: SEARCH_MAX }).optional(),
+});
+export type ListTasksQuery = z.infer<typeof ListTasksQuerySchema>;

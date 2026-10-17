@@ -3,6 +3,7 @@ import type { Clock } from '../../src/shared/clock';
 import type { IdGenerator } from '../../src/shared/ids';
 import { personNameKey, type Person, type PersonRepository, type PersonWithCount } from '../../src/people/person';
 import type { Task, TaskStatus, TaskView } from '../../src/tasks/task';
+import { matchesCriteria } from '../../src/tasks/task-criteria';
 import type { TaskCriteria, TaskRepository } from '../../src/tasks/task-repository';
 
 export class FakeClock implements Clock {
@@ -171,11 +172,12 @@ export class InMemoryTaskRepository implements TaskRepository {
     return task && task.boardId === boardId ? this.view(task) : null;
   }
 
-  async list(boardId: string, _criteria: TaskCriteria): Promise<TaskView[]> {
+  async list(boardId: string, criteria: TaskCriteria): Promise<TaskView[]> {
     return [...this.tasks.values()]
       .filter((t) => t.boardId === boardId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .map((t) => this.view(t));
+      .map((t) => this.view(t))
+      .filter((t) => matchesCriteria(t, criteria));
   }
 
   async update(task: Task): Promise<TaskView | null> {

@@ -5,6 +5,7 @@ import {
   normalizeText,
   TITLE_MAX,
   TITLE_MIN,
+  type TaskDto,
   type ValidationIssueDto,
 } from '@taskflow/contracts';
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,7 +38,7 @@ const validate = (title: string, description: string): FieldErrors => {
 };
 
 /** Formulario de nueva tarea (FR-007, FR-009, FR-011, FR-021). */
-export const CreateTaskForm = () => {
+export const CreateTaskForm = ({ onCreated }: { readonly onCreated?: (task: TaskDto) => void }) => {
   const ids = { heading: useId(), title: useId(), desc: useId() };
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -63,8 +64,9 @@ export const CreateTaskForm = () => {
     createTask.mutate(
       { id: pendingId.current, title, description, assigneeId },
       {
-        onSuccess: () => {
+        onSuccess: (task) => {
           pendingId.current = null;
+          onCreated?.(task);
           setTitle('');
           setDescription('');
           setAssigneeId(null);
