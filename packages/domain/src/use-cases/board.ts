@@ -76,6 +76,19 @@ export const getBoardDetails = async (
   board: Board,
 ): Promise<Board & BoardStats> => ({ ...board, ...(await deps.boards.getStats(board.id)) });
 
+/** Cambia el nombre del tablero (FR-114). BOARD_NOT_FOUND si se borró mientras tanto. */
+export const renameBoard = async (
+  deps: Pick<BoardDeps, 'boards' | 'clock'>,
+  boardId: string,
+  rawName: string,
+): Promise<Result<Board, DomainError>> => {
+  const name = parseBoardName(rawName);
+  if (!name.ok) return err(validationError(name.error));
+  if (!(await deps.boards.rename(boardId, name.value, deps.clock.now()))) return err({ code: 'BOARD_NOT_FOUND' });
+  const board = await deps.boards.findById(boardId);
+  return board ? ok(board) : err({ code: 'BOARD_NOT_FOUND' });
+};
+
 /** Sustituye el código del tablero; el anterior deja de funcionar inmediatamente (FR-028b). */
 export const regenerateAccessCode = async (
   deps: BoardDeps,

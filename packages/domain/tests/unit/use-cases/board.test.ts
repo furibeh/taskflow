@@ -5,6 +5,7 @@ import {
   getBoardDetails,
   initBoard,
   regenerateAccessCode,
+  renameBoard,
   resolveBoard,
 } from '../../../src/use-cases/board';
 import {
@@ -145,5 +146,32 @@ describe('casos de uso del tablero', () => {
     const details = await getBoardDetails(deps, created.value.board);
 
     expect(details).toMatchObject({ id: BOARD_ID, name: 'Equipo', taskCount: 1, personCount: 1 });
+  });
+
+  describe('renameBoard (US3, FR-114)', () => {
+    it('normaliza el nombre y actualiza updatedAt', async () => {
+      await createBoard(deps, { id: BOARD_ID, name: 'Equipo Diseño' });
+      deps.clock.advance(60_000);
+
+      const result = await renameBoard(deps, BOARD_ID, '  Diseño y UX ');
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toMatchObject({ id: BOARD_ID, name: 'Diseño y UX', updatedAt: deps.clock.now() });
+      expect(await deps.boards.findById(BOARD_ID)).toMatchObject({ name: 'Diseño y UX', updatedAt: deps.clock.now() });
+    });
+
+    it('un nombre inválido no cambia nada', async () => {
+      await createBoard(deps, { id: BOARD_ID, name: 'Equipo Diseño' });
+      expect(await renameBoard(deps, BOARD_ID, 'a'.repeat(61))).toEqual({
+        ok: false,
+        error: { code: 'VALIDATION_ERROR', issues: [{ field: 'name', rule: 'too_long', limit: 60 }] },
+      });
+      expect((await deps.boards.findById(BOARD_ID))?.name).toBe('Equipo Diseño');
+    });
+
+    it('si el tablero ya no existe devuelve BOARD_NOT_FOUND', async () => {
+      expect(await renameBoard(deps, BOARD_ID, 'Diseño')).toEqual({ ok: false, error: { code: 'BOARD_NOT_FOUND' } });
+    });
   });
 });
