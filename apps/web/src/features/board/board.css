@@ -13,7 +13,7 @@
   max-height: 75vh;
   padding: var(--space-3);
   border-radius: var(--radius);
-  background: var(--color-column);
+  background: var(--color-surface);
 }
 .column--tab {
   max-height: none;
@@ -144,7 +144,7 @@
 }
 .card--overlay {
   font-weight: 600;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
+  box-shadow: var(--shadow-lg);
   cursor: grabbing;
 }
 .card__status {
