@@ -123,6 +123,25 @@ describe('pantalla de inicio y creación de tableros (US1)', () => {
     expect(createButton()).toBeVisible();
   });
 
+  it('la confirmación al cerrar recibe el foco y se anuncia; al cancelar vuelve a "Copiar enlace" (T056)', async () => {
+    const user = userEvent.setup();
+    renderHome();
+    await screen.findByRole('button', { name: 'Crear tablero' });
+    await user.type(nameField(), 'Equipo');
+    await user.click(createButton());
+    const dialog = await screen.findByRole('dialog', { name: 'Tablero «Equipo» creado' });
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cerrar' }));
+    // El lector de pantalla lee la pregunta al entrar en el grupo con el foco (Orca no la anunciaba).
+    const question = within(dialog).getByRole('group', {
+      name: 'No podrás volver a ver este enlace. ¿Cerrar de todos modos?',
+    });
+    expect(within(question).getByRole('button', { name: 'Cancelar' })).toHaveFocus();
+
+    await user.click(within(question).getByRole('button', { name: 'Cancelar' }));
+    expect(within(dialog).getByRole('button', { name: 'Copiar enlace' })).toHaveFocus();
+  });
+
   it('tras copiar el enlace, el aviso se cierra sin preguntar', async () => {
     const user = userEvent.setup();
     renderHome();

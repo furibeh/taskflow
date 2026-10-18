@@ -51,3 +51,12 @@ test('regenerar en un contexto invalida el enlace en el otro en su siguiente acc
   await expect(page.getByRole('button', { name: 'Con el enlace viejo', exact: true })).toHaveCount(0);
   await other.close();
 });
+
+test('public-config solo dice si se pueden crear tableros, con o sin código (D16)', async ({ request }) => {
+  for (const headers of [{}, { authorization: `Bearer ${accessCode()}` }]) {
+    const res = await request.get('/api/v1/public-config', { headers });
+    expect(res.status()).toBe(200);
+    expect(await res.json()).toEqual({ boardCreationEnabled: true });
+    expect(res.headers()['set-cookie']).toBeUndefined();
+  }
+});

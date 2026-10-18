@@ -1,16 +1,18 @@
 import { expect, test } from '@playwright/test';
 import { apiClient, createTask } from './support/api';
-import { openBoard, resetBoardData } from './support/board';
+import { ensureBoards, openBoard, resetBoardData } from './support/board';
 
 const BUDGET_MS = 1_000;
 
-test('con 200 tareas, cargar, buscar, filtrar y cambiar estado tardan menos de 1 s (SC-003)', async ({
+test('con 100 tableros y 200 tareas, cargar, buscar, filtrar y cambiar estado tardan menos de 1 s (SC-003, SC-106)', async ({
   page,
   baseURL,
 }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile-320', 'Se mide una vez, en escritorio');
   test.setTimeout(120_000);
   await resetBoardData();
+  // SC-106: el tablero medido convive con al menos otros 99 tableros con datos.
+  expect(await ensureBoards(100)).toBeGreaterThanOrEqual(100);
   const api = await apiClient(baseURL!);
   for (let batch = 0; batch < 20; batch++) {
     await Promise.all(

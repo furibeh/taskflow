@@ -19,7 +19,8 @@ try {
     console.log('Tablero creado. Guarda este enlace: no se volverá a mostrar.');
     console.log(`Enlace del tablero: ${boardLink(env.PUBLIC_WEB_URL, result.accessCode)}`);
   } else {
-    console.log('El tablero ya existe. Si has perdido el enlace, usa: npm run board:rotate');
+    console.log('Ya existe al menos un tablero; no se crea otro.');
+    console.log('Si has perdido un enlace, busca el tablero con board:list y usa: board:rotate -- --board <id>');
   }
 } finally {
   await db.destroy();

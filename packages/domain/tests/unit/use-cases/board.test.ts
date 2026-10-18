@@ -5,6 +5,7 @@ import {
   deleteBoard,
   getBoardDetails,
   initBoard,
+  listBoards,
   regenerateAccessCode,
   renameBoard,
   resolveBoard,
@@ -200,6 +201,28 @@ describe('casos de uso del tablero', () => {
 
     it('un tablero inexistente es BOARD_NOT_FOUND', async () => {
       expect(await deleteBoard(deps, BOARD_ID)).toEqual({ ok: false, error: { code: 'BOARD_NOT_FOUND' } });
+    });
+  });
+
+  describe('listBoards (consola, FR-119)', () => {
+    it('devuelve los tableros por fecha de creación con recuentos y última actividad, sin códigos', async () => {
+      await createBoard(deps, { id: BOARD_ID, name: 'Primero' });
+      deps.clock.advance(60_000);
+      await createBoard(deps, { id: 'b0000000-0000-4000-8000-000000000002', name: 'Segundo' });
+      people.add(BOARD_ID, 'Ana');
+
+      const boards = await listBoards(deps);
+
+      expect(boards.map((b) => b.name)).toEqual(['Primero', 'Segundo']);
+      expect(boards[0]).toEqual({
+        id: BOARD_ID,
+        name: 'Primero',
+        createdAt: new Date('2026-10-17T10:00:00Z'),
+        taskCount: 0,
+        personCount: 1,
+        lastActivityAt: new Date('2026-10-17T10:00:00Z'),
+      });
+      expect(JSON.stringify(boards)).not.toMatch(/codigo-de-prueba|accessCode/);
     });
   });
 });

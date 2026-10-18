@@ -12,7 +12,9 @@
     "db:migrate:down": "tsx src/cli/migrate.ts down",
     "board:init": "tsx src/cli/board-init.ts",
     "board:create": "tsx src/cli/board-create.ts",
-    "board:rotate": "tsx src/cli/board-rotate.ts"
+    "board:list": "tsx src/cli/board-list.ts",
+    "board:rotate": "tsx src/cli/board-rotate.ts",
+    "board:delete": "tsx src/cli/board-delete.ts"
   },
   "dependencies": {
     "@fastify/helmet": "^13.2.0",
