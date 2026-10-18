@@ -50,7 +50,7 @@ export const BoardTabs = ({ columns, onOpenTask }: BoardTabsProps) => {
             aria-selected={index === selected}
             aria-controls={`${baseId}-panel`}
             tabIndex={index === selected ? 0 : -1}
-            className="board-tabs__tab"
+            className={`board-tabs__tab board-tabs__tab--${status}`}
             onClick={() => setSelected(index)}
             onKeyDown={onKeyDown}
           >
@@ -63,7 +63,7 @@ export const BoardTabs = ({ columns, onOpenTask }: BoardTabsProps) => {
           role="tabpanel"
           id={`${baseId}-panel`}
           aria-labelledby={`${baseId}-tab-${current.status}`}
-          className="column column--tab"
+          className={`column column--tab column--${current.status}`}
         >
           <ColumnTasks tasks={current.tasks} onOpenTask={onOpenTask} />
         </div>

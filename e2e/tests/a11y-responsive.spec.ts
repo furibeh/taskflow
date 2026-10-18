@@ -80,6 +80,37 @@ test('modo oscuro: sin incumplimientos WCAG 2.1 AA (contraste incluido)', async 
   await expectNoA11yViolations(page);
 });
 
+test('modo oscuro: columna destino y tarjeta "Guardando…" sin incumplimientos (FR-009, SC-001)', async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await openBoard(page);
+
+  if (testInfo.project.name !== 'mobile-320') {
+    // Por debajo de 768 px no hay asa de mover: la columna destino solo existe en escritorio.
+    await page.getByRole('button', { name: 'Mover «A»' }).focus();
+    await page.keyboard.press('Space');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.column--drop-target')).toHaveCount(1);
+    await expectNoA11yViolations(page);
+    await expectTapTargets(page);
+    await expectNoHorizontalScroll(page);
+    await page.keyboard.press('Escape');
+  }
+
+  await page.route('**/api/v1/tasks/*', async (route) => {
+    if (route.request().method() !== 'PATCH') return route.continue();
+    await new Promise((resolve) => setTimeout(resolve, 2_000));
+    return route.continue();
+  });
+  await showColumn(page, 'Pendiente');
+  await page.getByRole('combobox', { name: 'Estado de «A»' }).selectOption('done');
+  await expect(page.getByText('Guardando…')).toBeVisible();
+  await expectNoA11yViolations(page);
+  await expectTapTargets(page);
+  await expectNoHorizontalScroll(page);
+});
+
 test('movimiento reducido: los botones no animan el desplazamiento (FR-007, SC-005)', async ({ page }) => {
   await openBoard(page);
   const button = page.getByRole('button', { name: 'Crear tarea' });

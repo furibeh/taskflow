@@ -5,6 +5,24 @@
   align-items: start;
 }
 
+/* Acento por estado (R32): el modificador fija los colores y la cabecera los muestra junto al
+   nombre del estado, nunca solo con color (FR-005). */
+.column--pending,
+.board-tabs__tab--pending {
+  --column-accent: var(--color-status-pending);
+  --column-soft: var(--color-status-pending-soft);
+}
+.column--in_progress,
+.board-tabs__tab--in_progress {
+  --column-accent: var(--color-status-in_progress);
+  --column-soft: var(--color-status-in_progress-soft);
+}
+.column--done,
+.board-tabs__tab--done {
+  --column-accent: var(--color-status-done);
+  --column-soft: var(--color-status-done-soft);
+}
+
 .column {
   display: flex;
   flex-direction: column;
@@ -12,8 +30,10 @@
   min-width: 0;
   max-height: 75vh;
   padding: var(--space-3);
+  border: var(--border);
   border-radius: var(--radius);
-  background: var(--color-surface);
+  background: var(--column-soft, var(--color-surface));
+  box-shadow: var(--shadow);
 }
 .column--tab {
   max-height: none;
@@ -23,15 +43,21 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
+  margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-3)) 0;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border);
+  background: var(--column-accent, var(--color-surface));
+  color: var(--color-on-status);
 }
 .column__title {
   margin: 0;
   font-size: 1.05rem;
+  font-weight: 700;
 }
 .column__count {
   margin: 0;
-  color: var(--color-text-muted);
   font-size: 0.9rem;
+  font-weight: 700;
 }
 .column__empty {
   margin: 0;
@@ -39,9 +65,10 @@
 }
 .column__list {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
   margin: 0;
-  padding: 0;
+  /* Hueco para la sombra de las tarjetas dentro de la zona con desplazamiento. */
+  padding: 0 var(--shadow-offset-sm) var(--shadow-offset-sm) 0;
   list-style: none;
   overflow-y: auto;
 }
@@ -50,9 +77,10 @@
   display: grid;
   gap: var(--space-1);
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: var(--border-sm);
   border-radius: var(--radius);
   background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 .card__title {
   width: 100%;
@@ -62,7 +90,7 @@
   background: none;
   color: var(--color-primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   text-align: start;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -87,30 +115,33 @@
 .board-tabs__list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-1);
-  margin-bottom: var(--space-2);
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
+/* Pestaña activa: acento, borde grueso y sombra; inactiva: superficie sin sombra (FR-009). */
 .board-tabs__tab {
   min-height: var(--tap-size);
   padding: var(--space-1);
-  border: 1px solid var(--color-border);
+  border: var(--border-sm);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .board-tabs__tab[aria-selected='true'] {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
+  border-width: var(--border-width);
+  background: var(--column-accent);
+  color: var(--color-on-status);
+  box-shadow: var(--shadow-sm);
 }
 
 .column--drop-target {
-  outline: 3px dashed var(--color-primary);
-  outline-offset: -3px;
+  outline: var(--border-width) dashed var(--color-focus);
+  outline-offset: 3px;
+  box-shadow: var(--shadow-lg);
 }
 .card__top {
   display: flex;
@@ -120,32 +151,57 @@
 .card__top .card__title {
   flex: 1;
 }
+/* El asa se hunde sobre su sombra como los botones (R31). */
 .card__handle {
   flex: none;
   display: grid;
   place-items: center;
   width: var(--tap-size);
   height: var(--tap-size);
-  border: 1px solid var(--color-border);
+  border: var(--border-sm);
   border-radius: var(--radius);
   background: var(--color-surface);
-  color: var(--color-text-muted);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
   cursor: grab;
+  transition:
+    transform var(--press-duration),
+    box-shadow var(--press-duration);
+}
+.card__handle:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--color-shadow);
+}
+.card__handle:active {
+  transform: translate(var(--shadow-offset-sm), var(--shadow-offset-sm));
+  box-shadow: none;
 }
 .card__handle[aria-pressed='true'] {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border: var(--border-width) solid var(--color-focus);
+  color: var(--color-text);
+  box-shadow: var(--shadow);
 }
 .card--dragging {
   opacity: 0.4;
+  border-style: dashed;
 }
 .card--picked {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
 }
 .card--overlay {
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: var(--shadow-lg);
   cursor: grabbing;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card--overlay {
+    transform: rotate(-2deg);
+  }
+}
+/* "Guardando…": el texto se mantiene y el borde pasa a discontinuo (FR-009). */
+.card:has(.card__saving) {
+  border-style: dashed;
 }
 .card__status {
   display: flex;
@@ -161,7 +217,7 @@
   min-width: 0;
   min-height: var(--tap-size);
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--color-border);
+  border: var(--border-sm);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-text);
@@ -171,5 +227,14 @@
   margin: 0;
   color: var(--color-text-muted);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+@media (forced-colors: active) {
+  .column,
+  .card,
+  .card__handle,
+  .board-tabs__tab {
+    box-shadow: none;
+  }
 }
