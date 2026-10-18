@@ -10,8 +10,8 @@ con Spec Kit, por fases y pruebas primero; las tareas hechas están marcadas `[X
 - `specs/001-kanban-task-board/` (T001–T150): el tablero. Implementada; solo queda T134 (validación
   manual con lector de pantalla). Decisiones D1–D11 de su `plan.md`.
 - `specs/002-multiple-boards/` (T001–T056): varios tableros (uno por equipo), creación desde la
-  web, nombre, borrado definitivo y consola de administración. Implementada; quedan las tareas
-  manuales T054 (quickstart) y T056 (lector de pantalla). Decisiones D12–D16 de su `plan.md`
+  web, nombre, borrado definitivo y consola de administración. Implementada y validada (incluidas
+  las pruebas manuales T054 y T056). Decisiones D12–D16 de su `plan.md`
   (D12 sustituye a D4 de la 001); riesgo aceptado de ids globales en su `research.md` (R27).
 
 Cada fase se entrega en una rama `pr/NN-…` desde `main` con un commit por capa.

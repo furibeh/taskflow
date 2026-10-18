@@ -97,7 +97,7 @@ Sobre la instalación aislada, con Firefox y Orca 50.3 (KDE, Wayland), solo con 
 | 1 | Pantalla de inicio | ✅ |
 | 2 | Validación del nombre | ✅ |
 | 3 | Crear: "Guardando…" y diálogo con el enlace | ✅ |
-| 4 | Cerrar sin copiar (FR-103a) | ❌ → ✅ corregido: Orca no anunciaba la pregunta "¿Cerrar de todos modos?" |
+| 4 | Cerrar sin copiar (FR-103a) | ❌ → ✅ Orca no anunciaba la pregunta; corregido y vuelto a probar con Orca: OK |
 | 5 | Copiar ("Enlace copiado") y abrir | ✅ |
 | 6 | Menú "Tablero" (contraído/expandido) y renombrar | ✅ |
 | 7 | Borrar: aviso, botón no disponible hasta escribir el nombre, aviso final | ✅ |
@@ -105,6 +105,6 @@ Sobre la instalación aislada, con Firefox y Orca 50.3 (KDE, Wayland), solo con 
 **Defecto del paso 4 y corrección**: la pregunta aparecía sin mover el foco y fuera de una región
 `aria-live`. Ahora el foco pasa a "Cancelar", dentro del grupo etiquetado con la pregunta (el
 lector la lee al entrar), y al cancelar vuelve a "Copiar enlace". Pruebas de regresión en
-`create-board.test.tsx` y `boards.spec.ts` (foco comprobado en Chromium). Pendiente: que el
-usuario repita el paso 4 con Orca sobre la corrección.
+`create-board.test.tsx` y `boards.spec.ts` (foco comprobado en Chromium). El usuario repitió el
+paso 4 con Orca sobre la corrección: se anuncia la pregunta y "Cancelar".
 

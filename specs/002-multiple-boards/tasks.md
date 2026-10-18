@@ -204,8 +204,8 @@ volver al inicio con el aviso, y el enlace da "Enlace no válido".
 - [X] T054 Run the manual validation of `specs/002-multiple-boards/quickstart.md` including the timing of SC-101 (scenario 1b), and record the result in `specs/002-multiple-boards/checklists/quickstart-run.md` (same format as the 001)
   - **Resultado (2026-10-18)**: secciones 1–7 ejecutadas por el asistente y SC-101 (escenario 1b) por el usuario, en menos de 60 s; registro en `checklists/quickstart-run.md`.
 - [X] T055 Run `npm run lint`, `npm run lint:deps`, `npm run typecheck`, `npm test`, `npm run test:e2e` and `npm audit --audit-level=high`; all must pass before closing the feature (constitución, definición de terminado)
-- [ ] T056 Manual screen reader review (NVDA or Orca) of the new flows: create a board, copy the link, FR-103a confirmation, rename and delete (SC-107)
-  - **Resultado (2026-10-18, usuario, Orca 50.3 + Firefox)**: pasos 1–3 y 5–7 OK. Paso 4 (FR-103a): Orca no anunciaba la confirmación; corregido moviendo el foco a "Cancelar" dentro del grupo etiquetado con la pregunta (y de vuelta a "Copiar enlace" al cancelar), con pruebas de regresión. Falta repetir el paso 4 con Orca sobre la corrección.
+- [X] T056 Manual screen reader review (NVDA or Orca) of the new flows: create a board, copy the link, FR-103a confirmation, rename and delete (SC-107)
+  - **Resultado (2026-10-18, usuario, Orca 50.3 + Firefox)**: pasos 1–3 y 5–7 OK. Paso 4 (FR-103a): Orca no anunciaba la confirmación; corregido moviendo el foco a "Cancelar" dentro del grupo etiquetado con la pregunta (y de vuelta a "Copiar enlace" al cancelar), con pruebas de regresión. Paso 4 repetido con Orca sobre la corrección: OK.
 
 ---
 
