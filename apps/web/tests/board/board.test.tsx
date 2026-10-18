@@ -148,3 +148,32 @@ describe('tablero y creación de tareas (US1)', () => {
     }
   });
 });
+
+describe('acento por estado (feature 003, FR-005, R32)', () => {
+  it('cada columna lleva el modificador de su estado', async () => {
+    renderApp();
+    await screen.findByText(/Todavía no hay tareas/);
+    expect(column('Pendiente')).toHaveClass('column', 'column--pending');
+    expect(column('En progreso')).toHaveClass('column', 'column--in_progress');
+    expect(column('Hecha')).toHaveClass('column', 'column--done');
+  });
+
+  it('en pantallas estrechas cada pestaña y el panel llevan el modificador del estado', async () => {
+    setViewportWide(false);
+    const user = userEvent.setup();
+    try {
+      renderApp();
+      const tabs = await screen.findAllByRole('tab');
+      expect(tabs[0]).toHaveClass('board-tabs__tab', 'board-tabs__tab--pending');
+      expect(tabs[1]).toHaveClass('board-tabs__tab', 'board-tabs__tab--in_progress');
+      expect(tabs[2]).toHaveClass('board-tabs__tab', 'board-tabs__tab--done');
+      expect(screen.getByRole('tabpanel')).toHaveClass('column', 'column--tab', 'column--pending');
+
+      await user.click(tabs[2]!);
+      expect(screen.getByRole('tabpanel')).toHaveClass('column--done');
+      expect(screen.getByRole('tabpanel')).not.toHaveClass('column--pending');
+    } finally {
+      setViewportWide(true);
+    }
+  });
+});

@@ -33,7 +33,7 @@ export const Column = ({ status, tasks, onOpenTask }: ColumnProps) => {
   return (
     <section
       ref={setNodeRef}
-      className={dropTarget ? 'column column--drop-target' : 'column'}
+      className={['column', `column--${status}`, dropTarget && 'column--drop-target'].filter(Boolean).join(' ')}
       aria-labelledby={headingId}
       data-drop-target={dropTarget || undefined}
     >
