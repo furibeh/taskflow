@@ -1,5 +1,5 @@
 import { BoardSchema, RegenerateAccessCodeResponseSchema } from '@taskflow/contracts';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from './ApiContext';
 
 export const boardKey = ['board'] as const;
@@ -18,5 +18,15 @@ export const useRegenerateLink = () => {
         method: 'POST',
         schema: RegenerateAccessCodeResponseSchema,
       }),
+  });
+};
+
+/** El nombre nuevo solo se muestra cuando el servidor confirma el guardado (FR-021). */
+export const useRenameBoard = () => {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => api.request('/v1/board', { method: 'PATCH', body: { name }, schema: BoardSchema }),
+    onSuccess: (board) => queryClient.setQueryData(boardKey, board),
   });
 };
