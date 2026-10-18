@@ -84,6 +84,20 @@ export const createFakeServer = () => {
         personCount: people.length,
       });
     }
+    if (url.pathname === '/api/v1/board' && method === 'PATCH') {
+      const name = (JSON.parse(String(init?.body)) as { name: string }).name.trim();
+      if (name.length < 1 || Array.from(name).length > 60) return problem(400, 'VALIDATION_ERROR');
+      const createdId = boardByCode.get(authorization?.replace(/^Bearer /, '') ?? '');
+      if (createdId) createdBoards.set(createdId, name);
+      else board.name = name;
+      return json(200, {
+        id: createdId ?? board.id,
+        name,
+        accessCodeRotatedAt: new Date(clock).toISOString(),
+        taskCount: tasks.length,
+        personCount: people.length,
+      });
+    }
     if (url.pathname === '/api/v1/board/access-code/regenerate' && method === 'POST') {
       return json(200, { accessCode: 'N'.repeat(43), rotatedAt: new Date(clock).toISOString() });
     }

@@ -3,7 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiProvider } from '../api/ApiContext';
 import { useBoard } from '../api/board';
 import { createApiClient, type ApiClient } from '../api/client';
+import { BoardMenu } from '../features/access/BoardMenu';
 import { InvalidLinkPage } from '../features/access/InvalidLinkPage';
+import { RenameBoardDialog } from '../features/access/RenameBoardDialog';
 import { ShareLinkDialog } from '../features/access/ShareLinkDialog';
 import { HomePage } from '../features/home/HomePage';
 import { PeopleDialog } from '../features/people/PeopleDialog';
@@ -27,6 +29,7 @@ type View = 'home' | 'invalid' | 'board';
 const OpenBoard = () => {
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const board = useBoard();
   const name = board.data?.name;
 
@@ -41,8 +44,12 @@ const OpenBoard = () => {
         <nav className="app-header__actions" aria-label="Acciones del tablero">
           <Button onClick={() => setPeopleOpen(true)}>{es.people.open}</Button>
           <Button onClick={() => setShareOpen(true)}>{es.share.open}</Button>
+          {name !== undefined && <BoardMenu items={[{ label: es.boardMenu.rename, onSelect: () => setRenameOpen(true) }]} />}
         </nav>
       </header>
+      {renameOpen && name !== undefined && (
+        <RenameBoardDialog currentName={name} onClose={() => setRenameOpen(false)} />
+      )}
       <PeopleDialog open={peopleOpen} onClose={() => setPeopleOpen(false)} />
       <ShareLinkDialog open={shareOpen} onClose={() => setShareOpen(false)} />
       <BoardPage />
