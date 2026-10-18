@@ -292,3 +292,12 @@ toque la web) en verde.
 - `vitest` del dominio no tiene tipos de Node: las pruebas de T005/T008 no usan `Buffer` ni
   `node:*`.
 - No se toca `specs/001-kanban-task-board/tasks.md`: la 002 tiene su propia lista.
+
+---
+
+## Phase 9: Convergence
+
+**Purpose**: trabajo pendiente detectado por `/speckit-converge` (2026-10-18) al contrastar el código con la spec, el plan y las tareas.
+
+- [X] T057 Keep the "Tablero" dropdown inside the viewport at 320 px: today `.board-menu__list` in `apps/web/src/features/access/access.css` (`position: absolute; right: 0; min-width: 12rem`) renders from x = −84 to x = 108 in `mobile-320`, clipping "Cambiar nombre" and "Borrar tablero"; add first a failing check to `e2e/tests/boards.spec.ts` that opens the menu at 320 px and asserts its bounding box lies within `[0, viewport width]` with no horizontal scroll (and the same on desktop), then fix the layout per FR-120 / FR-032 (001) / SC-107 (partial)
+  - **Resultado (2026-10-18)**: la lista se alinea con el borde derecho de la cabecera (`.app-header` es su bloque contenedor) y tiene `max-width: calc(100vw - 2 * var(--space-4))`. A 320 px va de x = 112 a 304, 4 px bajo el botón; en escritorio, igual que antes. Prueba nueva en `boards.spec.ts` (falla antes del arreglo en `mobile-320`).

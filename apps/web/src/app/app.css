@@ -1,4 +1,6 @@
 .app-header {
+  /* Bloque contenedor del menú "Tablero" (T057). */
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

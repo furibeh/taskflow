@@ -177,3 +177,16 @@ test('US4: borrar el tablero confirmando con su nombre; su enlace deja de funcio
   await expect(other.getByRole('button', { name: 'Crear un tablero nuevo' })).toBeVisible();
   await other.close();
 });
+
+test('el menú "Tablero" queda dentro de la pantalla, también a 320 px (FR-120, T057)', async ({ page }) => {
+  await openCreated(page, await createBoard(page, 'Equipo del menú'), 'Equipo del menú');
+  await page.getByRole('button', { name: 'Tablero', exact: true }).click();
+
+  const viewport = page.viewportSize()!.width;
+  for (const name of ['Cambiar nombre', 'Borrar tablero']) {
+    const box = (await page.getByRole('button', { name }).boundingBox())!;
+    expect(box.x, `«${name}» empieza fuera de la pantalla`).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width, `«${name}» termina fuera de la pantalla`).toBeLessThanOrEqual(viewport);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+});
