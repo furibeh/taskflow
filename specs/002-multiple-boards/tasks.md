@@ -145,17 +145,17 @@ ver el nombre nuevo en la cabecera y la pestaña.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T032 [P] [US3] Add failing tests for `renameBoard(boardId, name)` to `packages/domain/tests/unit/use-cases/board.test.ts`: normalizes the name, sets `updatedAt = clock.now()`, invalid name → `VALIDATION_ERROR` without changes; if the board no longer exists → `BOARD_NOT_FOUND`
-- [ ] T033 [P] [US3] Write failing integration tests in `apps/api/tests/integration/board-manage.test.ts` (rename block): `PATCH /api/v1/board {name: "  Diseño y UX "}` → `200 Board` with `name: "Diseño y UX"`; blank and 61 characters → `400`; extra field → `400`; the other board is unchanged; with a regenerated code → `401 INVALID_LINK`; renaming a board that disappears between authentication and the write (board repository double that reports it as not found after `auth` resolved it) → `401 INVALID_LINK`
-- [ ] T034 [P] [US3] Add the `renameBoard` case (200/400/401) to `apps/api/tests/contract/boards.contract.test.ts`
-- [ ] T035 [P] [US3] Write failing web tests in `apps/web/tests/access/board-settings.test.tsx` (rename): the "Tablero" menu opens "Cambiar nombre" with the current name; validation messages next to the field; "Guardando…"; on success the header and `document.title` update only after the response; on error or timeout the name does not change, the text is kept and "Reintentar" is offered; no axe violations
+- [X] T032 [P] [US3] Add failing tests for `renameBoard(boardId, name)` to `packages/domain/tests/unit/use-cases/board.test.ts`: normalizes the name, sets `updatedAt = clock.now()`, invalid name → `VALIDATION_ERROR` without changes; if the board no longer exists → `BOARD_NOT_FOUND`
+- [X] T033 [P] [US3] Write failing integration tests in `apps/api/tests/integration/board-manage.test.ts` (rename block): `PATCH /api/v1/board {name: "  Diseño y UX "}` → `200 Board` with `name: "Diseño y UX"`; blank and 61 characters → `400`; extra field → `400`; the other board is unchanged; with a regenerated code → `401 INVALID_LINK`; renaming a board that disappears between authentication and the write (board repository double that reports it as not found after `auth` resolved it) → `401 INVALID_LINK` (implemented with a new optional `AppDeps.boards`, used only by tests, whose `rename` deletes the board first)
+- [X] T034 [P] [US3] Add the `renameBoard` case (200/400/401) to `apps/api/tests/contract/boards.contract.test.ts`
+- [X] T035 [P] [US3] Write failing web tests in `apps/web/tests/access/board-settings.test.tsx` (rename): the "Tablero" menu opens "Cambiar nombre" with the current name; validation messages next to the field; "Guardando…"; on success the header and `document.title` update only after the response; on error or timeout the name does not change, the text is kept and "Reintentar" is offered; no axe violations
 
 ### Implementation for User Story 3
 
-- [ ] T036 [US3] Implement `renameBoard` in `packages/domain/src/use-cases/board.ts`
-- [ ] T037 [US3] Add `PATCH /board` with `RenameBoardRequestSchema` to `apps/api/src/http/routes/board.ts`, returning the same shape as `GET /board`; map `BOARD_NOT_FOUND` to `401 INVALID_LINK` in `apps/api/src/http/plugins/error-handler.ts`
-- [ ] T038 [US3] Add `useRenameBoard` (invalidates `useBoard`) to `apps/web/src/api/board.ts`, create `apps/web/src/features/access/RenameBoardDialog.tsx`, and add a "Tablero" menu with "Cambiar nombre" to the header actions in `apps/web/src/app/App.tsx`
-- [ ] T039 [US3] Add the US3 block (rename and reload) to `e2e/tests/boards.spec.ts`
+- [X] T036 [US3] Implement `renameBoard` in `packages/domain/src/use-cases/board.ts`
+- [X] T037 [US3] Add `PATCH /board` with `RenameBoardRequestSchema` to `apps/api/src/http/routes/board.ts`, returning the same shape as `GET /board`; map `BOARD_NOT_FOUND` to `401 INVALID_LINK` in `apps/api/src/http/plugins/error-handler.ts`
+- [X] T038 [US3] Add `useRenameBoard` (invalidates `useBoard`) to `apps/web/src/api/board.ts`, create `apps/web/src/features/access/RenameBoardDialog.tsx`, and add a "Tablero" menu with "Cambiar nombre" to the header actions in `apps/web/src/app/App.tsx`
+- [X] T039 [US3] Add the US3 block (rename and reload) to `e2e/tests/boards.spec.ts`
 
 **Checkpoint**: US1–US3 funcionan de forma independiente.
 

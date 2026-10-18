@@ -115,3 +115,26 @@ test('US2: los datos de un tablero no aparecen en otro', async ({ page }) => {
   await expect(people.getByRole('listitem')).toHaveCount(1);
   await expect(people.getByText('Ana', { exact: true })).toBeVisible();
 });
+
+test('US3: cambiar el nombre del tablero y verlo al recargar en otra pestaña', async ({ page, context }) => {
+  const link = await openCreated(page, await createBoard(page, 'Equipo Diseño'), 'Equipo Diseño');
+
+  await page.getByRole('button', { name: 'Tablero', exact: true }).click();
+  await page.getByRole('button', { name: 'Cambiar nombre' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Cambiar nombre' });
+  await expect(dialog.getByLabel('Nombre del tablero')).toHaveValue('Equipo Diseño');
+  await expectNoA11yViolations(page);
+
+  await dialog.getByLabel('Nombre del tablero').fill('Diseño y UX');
+  await dialog.getByRole('button', { name: 'Guardar' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('heading', { level: 1, name: 'Diseño y UX' })).toBeVisible();
+  await expect(page).toHaveTitle('«Diseño y UX» · TaskFlow');
+  await expect(page.getByTestId('live-region')).toHaveText('Nombre del tablero cambiado');
+
+  const other = await context.newPage();
+  await other.goto(link);
+  await expect(other.getByRole('heading', { level: 1, name: 'Diseño y UX' })).toBeVisible();
+  await expect(other).toHaveTitle('«Diseño y UX» · TaskFlow');
+  await other.close();
+});
