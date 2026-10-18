@@ -130,7 +130,9 @@ export const BoardDnd = ({ enabled, children }: BoardDndProps) => {
         accessibility={{ announcements: dragAnnouncements, screenReaderInstructions: { draggable: es.move.instructions } }}
       >
         {children}
-        <DragOverlay>
+        {/* Sin animación al soltar: con guardado pesimista la tarjeta sigue en la columna de
+            origen hasta que el servidor confirma, y la copia volvería hacia allí (#29). */}
+        <DragOverlay dropAnimation={null}>
           {dragged ? <div className="card card--overlay">{dragged.title}</div> : null}
         </DragOverlay>
       </DndContext>
