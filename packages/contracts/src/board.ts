@@ -43,6 +43,9 @@ export type CreateBoardResponse = z.infer<typeof CreateBoardResponseSchema>;
 export const RenameBoardRequestSchema = z.strictObject({ name: BoardNameSchema });
 export type RenameBoardRequest = z.infer<typeof RenameBoardRequestSchema>;
 
+/** Respuesta 204 sin cuerpo (DELETE /board). */
+export const NoContentSchema = z.undefined();
+
 export const PublicConfigSchema = z.strictObject({ boardCreationEnabled: z.boolean() });
 export type PublicConfig = z.infer<typeof PublicConfigSchema>;
 

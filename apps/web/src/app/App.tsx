@@ -4,6 +4,7 @@ import { ApiProvider } from '../api/ApiContext';
 import { useBoard } from '../api/board';
 import { createApiClient, type ApiClient } from '../api/client';
 import { BoardMenu } from '../features/access/BoardMenu';
+import { DeleteBoardDialog } from '../features/access/DeleteBoardDialog';
 import { InvalidLinkPage } from '../features/access/InvalidLinkPage';
 import { RenameBoardDialog } from '../features/access/RenameBoardDialog';
 import { ShareLinkDialog } from '../features/access/ShareLinkDialog';
@@ -12,7 +13,7 @@ import { PeopleDialog } from '../features/people/PeopleDialog';
 import { es } from '../i18n/es';
 import { Button } from '../ui/Button';
 import { LiveRegionProvider } from '../ui/LiveRegion';
-import { getAccessCode, reloadAccessCodeFromHash, setAccessCode } from './access-code';
+import { clearAccessCode, getAccessCode, reloadAccessCodeFromHash, setAccessCode } from './access-code';
 import { BoardPage } from './BoardPage';
 import { createQueryClient } from './queryClient';
 
@@ -26,12 +27,19 @@ interface AppProps {
 type View = 'home' | 'invalid' | 'board';
 
 /** Cabecera y contenido del tablero abierto, con su nombre (FR-113). */
-const OpenBoard = () => {
+const OpenBoard = ({ onDeleted }: { readonly onDeleted: (name: string) => void }) => {
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const board = useBoard();
   const name = board.data?.name;
+
+  // Recuentos al día para la confirmación de borrado (FR-115).
+  const openDelete = () => {
+    void board.refetch();
+    setDeleteOpen(true);
+  };
 
   useEffect(() => {
     document.title = name ? `«${name}» · ${es.appName}` : es.appName;
@@ -44,11 +52,21 @@ const OpenBoard = () => {
         <nav className="app-header__actions" aria-label="Acciones del tablero">
           <Button onClick={() => setPeopleOpen(true)}>{es.people.open}</Button>
           <Button onClick={() => setShareOpen(true)}>{es.share.open}</Button>
-          {name !== undefined && <BoardMenu items={[{ label: es.boardMenu.rename, onSelect: () => setRenameOpen(true) }]} />}
+          {name !== undefined && (
+            <BoardMenu
+              items={[
+                { label: es.boardMenu.rename, onSelect: () => setRenameOpen(true) },
+                { label: es.boardMenu.delete, onSelect: openDelete },
+              ]}
+            />
+          )}
         </nav>
       </header>
       {renameOpen && name !== undefined && (
         <RenameBoardDialog currentName={name} onClose={() => setRenameOpen(false)} />
+      )}
+      {deleteOpen && board.data && (
+        <DeleteBoardDialog board={board.data} onDeleted={onDeleted} onClose={() => setDeleteOpen(false)} />
       )}
       <PeopleDialog open={peopleOpen} onClose={() => setPeopleOpen(false)} />
       <ShareLinkDialog open={shareOpen} onClose={() => setShareOpen(false)} />
@@ -62,6 +80,8 @@ export const App = ({ apiClient, fetchImpl }: AppProps) => {
   const [queryClient] = useState(createQueryClient);
   // Cada tablero abierto es una sesión nueva: se vuelve a montar con su código (US2).
   const [session, setSession] = useState(0);
+  // Aviso que muestra el inicio tras borrar un tablero (US4).
+  const [notice, setNotice] = useState<string | null>(null);
   const [client] = useState(
     () =>
       apiClient ??
@@ -82,6 +102,7 @@ export const App = ({ apiClient, fetchImpl }: AppProps) => {
   const switchTo = useCallback(
     (code: string | null) => {
       knownCode.current = code;
+      if (code !== null) setNotice(null);
       // Vaciar la caché no basta: las consultas ya montadas no siempre se repiten y la pantalla
       // podría seguir mostrando datos del tablero anterior.
       queryClient.clear();
@@ -102,6 +123,13 @@ export const App = ({ apiClient, fetchImpl }: AppProps) => {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, [apiClient, switchTo]);
 
+  // Tras borrar el tablero se vuelve al inicio con un aviso (US4); el código ya no sirve.
+  const onBoardDeleted = (name: string) => {
+    clearAccessCode();
+    setNotice(es.boardMenu.deleted(name));
+    switchTo(null);
+  };
+
   const openBoard = (code: string) => {
     setAccessCode(code);
     switchTo(code);
@@ -111,9 +139,9 @@ export const App = ({ apiClient, fetchImpl }: AppProps) => {
     <QueryClientProvider client={queryClient}>
       <ApiProvider client={client}>
         <LiveRegionProvider>
-          {view === 'home' && <HomePage onOpenBoard={openBoard} />}
+          {view === 'home' && <HomePage onOpenBoard={openBoard} notice={notice} />}
           {view === 'invalid' && <InvalidLinkPage onOpenBoard={openBoard} />}
-          {view === 'board' && <OpenBoard key={session} />}
+          {view === 'board' && <OpenBoard key={session} onDeleted={onBoardDeleted} />}
         </LiveRegionProvider>
       </ApiProvider>
     </QueryClientProvider>

@@ -98,10 +98,12 @@ export const createApiClient = (config: ApiClientConfig): ApiClient => {
       }
 
       let data: unknown;
-      try {
-        data = await response.json();
-      } catch {
-        throw new ApiError('INVALID_RESPONSE', response.status);
+      if (response.status !== 204) {
+        try {
+          data = await response.json();
+        } catch {
+          throw new ApiError('INVALID_RESPONSE', response.status);
+        }
       }
       const parsed = options.schema.safeParse(data);
       if (!parsed.success) throw new ApiError('INVALID_RESPONSE', response.status);

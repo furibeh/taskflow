@@ -128,4 +128,21 @@ describe('cliente HTTP', () => {
       status: 502,
     });
   });
+
+  it('una respuesta 204 sin cuerpo se valida como undefined (DELETE /board)', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    await expect(client().request('/v1/board', { method: 'DELETE', schema: z.undefined() })).resolves.toBeUndefined();
+  });
+
+  it('con auth: false no envía el código ni trata un 401 como enlace no válido (rutas públicas)', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(401, { type: 'about:blank', title: 'x', status: 401, code: 'INVALID_LINK' }, 'application/problem+json'),
+    );
+    await expect(client().request('/v1/public-config', { schema: okSchema, auth: false })).rejects.toMatchObject({
+      code: 'INVALID_LINK',
+    });
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(new Headers(init.headers).has('authorization')).toBe(false);
+    expect(onInvalidLink).not.toHaveBeenCalled();
+  });
 });

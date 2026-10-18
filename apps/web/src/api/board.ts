@@ -1,4 +1,4 @@
-import { BoardSchema, RegenerateAccessCodeResponseSchema } from '@taskflow/contracts';
+import { BoardSchema, NoContentSchema, RegenerateAccessCodeResponseSchema } from '@taskflow/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApi } from './ApiContext';
 
@@ -28,5 +28,13 @@ export const useRenameBoard = () => {
   return useMutation({
     mutationFn: (name: string) => api.request('/v1/board', { method: 'PATCH', body: { name }, schema: BoardSchema }),
     onSuccess: (board) => queryClient.setQueryData(boardKey, board),
+  });
+};
+
+/** Borrado definitivo del tablero (FR-116); quien lo llama decide adónde ir después. */
+export const useDeleteBoard = () => {
+  const api = useApi();
+  return useMutation({
+    mutationFn: () => api.request('/v1/board', { method: 'DELETE', schema: NoContentSchema }),
   });
 };
