@@ -1,4 +1,11 @@
-import { parseBoardName, type AccessCodeService, type Board, type BoardRepository, type BoardStats } from '../board/board';
+import {
+  parseBoardName,
+  type AccessCodeService,
+  type Board,
+  type BoardRepository,
+  type BoardStats,
+  type BoardSummary,
+} from '../board/board';
 import type { Clock } from '../shared/clock';
 import { validationError, type DomainError } from '../shared/errors';
 import type { IdGenerator } from '../shared/ids';
@@ -98,6 +105,9 @@ export const deleteBoard = async (
   boardId: string,
 ): Promise<Result<void, DomainError>> =>
   (await deps.boards.delete(boardId)) ? ok(undefined) : err({ code: 'BOARD_NOT_FOUND' });
+
+/** Tableros de la instalación para la consola (FR-119); nunca incluye códigos ni hashes. */
+export const listBoards = (deps: Pick<BoardDeps, 'boards'>): Promise<BoardSummary[]> => deps.boards.listSummaries();
 
 /** Sustituye el código del tablero; el anterior deja de funcionar inmediatamente (FR-028b). */
 export const regenerateAccessCode = async (
