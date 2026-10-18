@@ -21,15 +21,16 @@
   justify-content: space-between;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
+  border: var(--border-sm);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
 .people__person {
   display: grid;
   min-width: 0;
 }
 .people__name {
-  font-weight: 600;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 .people__count {
@@ -43,7 +44,7 @@
 }
 .people__warning {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 .people__actions {
   display: flex;

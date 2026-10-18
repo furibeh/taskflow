@@ -1,11 +1,21 @@
 .home {
   max-width: 32rem;
-  margin: 10vh auto 0;
+  margin: 10vh var(--space-4) 0;
   padding: var(--space-4);
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+@media (min-width: 34rem) {
+  .home {
+    margin-inline: auto;
+  }
 }
 .home__title {
   margin-top: 0;
   font-size: 1.5rem;
+  font-weight: 700;
 }
 .home__create {
   margin-top: var(--space-4);
@@ -20,9 +30,10 @@
 }
 .new-board__warning {
   margin: 0;
+  font-weight: 700;
 }
 .new-board__link {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 0.875rem;
 }
 .new-board__actions {
@@ -37,6 +48,7 @@
 .home__notice {
   margin: 0 0 var(--space-4);
   padding: var(--space-3);
+  border: var(--border-sm);
   border-radius: var(--radius);
   background: var(--color-success-bg);
 }

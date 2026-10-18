@@ -8,11 +8,12 @@
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--border);
 }
 .app-header__title {
   margin: 0;
   font-size: 1.25rem;
+  font-weight: 700;
 }
 
 .page {
@@ -25,9 +26,19 @@
 
 .invalid-link {
   max-width: 32rem;
-  margin: 15vh auto 0;
+  margin: 15vh var(--space-4) 0;
   padding: var(--space-4);
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
   text-align: center;
+}
+/* Centrado sin tocar los márgenes laterales, que mantienen la sombra dentro de 320 px. */
+@media (min-width: 34rem) {
+  .invalid-link {
+    margin-inline: auto;
+  }
 }
 .app-header__actions {
   display: flex;
