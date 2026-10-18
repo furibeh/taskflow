@@ -6,6 +6,7 @@ import {
   type BoardDto,
 } from '@taskflow/contracts';
 import {
+  deleteBoard,
   getBoardDetails,
   regenerateAccessCode,
   renameBoard,
@@ -47,6 +48,13 @@ export const boardRoutes: FastifyPluginAsyncZod<{ deps: BoardRouteDeps }> = asyn
       return toBoardDto(await getBoardDetails(deps, result.value));
     },
   );
+
+  // Borrado definitivo, sin deshacer (D14); el código deja de funcionar al responder (FR-116).
+  app.delete('/board', async (request, reply) => {
+    const result = await deleteBoard(deps, currentBoard(request).id);
+    if (!result.ok) throw new DomainFailure(result.error);
+    return reply.code(204).send();
+  });
 
   // El código nuevo solo se devuelve en esta respuesta, que no debe guardarse en cachés (FR-028b).
   app.post(

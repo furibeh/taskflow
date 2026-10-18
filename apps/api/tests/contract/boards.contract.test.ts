@@ -90,4 +90,12 @@ describe('contrato del tablero (feature 002)', () => {
     expectResponse('renameBoard', 400, await patch({ name: '' }));
     expectResponse('renameBoard', 401, await patch({ name: 'Diseño' }, { authorization: 'Bearer x' }));
   });
+
+  it('deleteBoard 204 y 401', async () => {
+    const del = (headers: Record<string, string>) => t.app.inject({ method: 'DELETE', url: '/api/v1/board', headers });
+    const res = await del(t.authHeader());
+    expect(res.statusCode).toBe(204);
+    expectMatchesContract('deleteBoard', 204, res.body);
+    expectResponse('deleteBoard', 401, await del(t.authHeader()));
+  });
 });

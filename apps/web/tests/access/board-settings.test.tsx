@@ -117,4 +117,78 @@ describe('gestionar el tablero desde la cabecera', () => {
       expect(await screen.findByRole('heading', { name: 'Enlace no válido' })).toBeVisible();
     });
   });
+
+  describe('borrar el tablero (US4, FR-115, FR-116)', () => {
+    const withData = () => {
+      const server = createFakeServer();
+      server.addPerson('Ana');
+      server.addTask({ title: 'Una' });
+      server.addTask({ title: 'Dos' });
+      return server;
+    };
+
+    it('la confirmación muestra el nombre, los recuentos y que no se puede deshacer', async () => {
+      const user = userEvent.setup();
+      await renderBoard(withData());
+      const dialog = await openMenuItem(user, 'Borrar tablero');
+
+      expect(
+        within(dialog).getByText('Se borrará el tablero «Mi tablero» con 2 tareas y 1 persona. No se puede deshacer.'),
+      ).toBeVisible();
+      await expectNoAxeViolations(dialog);
+    });
+
+    it('el botón solo se activa al escribir el nombre exacto', async () => {
+      const user = userEvent.setup();
+      const server = await renderBoard(withData());
+      const dialog = await openMenuItem(user, 'Borrar tablero');
+      const confirm = within(dialog).getByLabelText('Escribe «Mi tablero» para confirmar');
+      const button = within(dialog).getByRole('button', { name: 'Borrar tablero' });
+
+      expect(button).toBeDisabled();
+      await user.type(confirm, 'mi tablero');
+      expect(button).toBeDisabled();
+      await user.clear(confirm);
+      await user.type(confirm, '  Mi tablero ');
+      expect(button).toBeEnabled();
+      expect(server.requests('DELETE')).toHaveLength(0);
+    });
+
+    it('al borrar vuelve al inicio con el aviso y sin el código en el fragmento', async () => {
+      const user = userEvent.setup();
+      const server = await renderBoard(withData());
+      await waitFor(() => expect(document.title).toBe('«Mi tablero» · TaskFlow'));
+      const dialog = await openMenuItem(user, 'Borrar tablero');
+      await user.type(within(dialog).getByLabelText('Escribe «Mi tablero» para confirmar'), 'Mi tablero');
+
+      const release = server.holdWrites();
+      await user.click(within(dialog).getByRole('button', { name: 'Borrar tablero' }));
+      expect(await within(dialog).findByRole('button', { name: 'Guardando…' })).toBeDisabled();
+      release();
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Tableros de tareas para tu equipo' })).toBeVisible();
+      expect(screen.getByText('Tablero «Mi tablero» borrado', { selector: '.home__notice' })).toBeVisible();
+      await waitFor(() => expect(screen.getByTestId('live-region')).toHaveTextContent('Tablero «Mi tablero» borrado'));
+      expect(window.location.hash).toBe('');
+      expect(document.title).toBe('TaskFlow');
+      expect(server.requests('DELETE')).toHaveLength(1);
+    });
+
+    it('si falla, ofrece reintentar y no cambia nada', async () => {
+      const user = userEvent.setup();
+      const server = await renderBoard(withData());
+      const dialog = await openMenuItem(user, 'Borrar tablero');
+      await user.type(within(dialog).getByLabelText('Escribe «Mi tablero» para confirmar'), 'Mi tablero');
+      server.failNextWithNetworkError();
+      await user.click(within(dialog).getByRole('button', { name: 'Borrar tablero' }));
+
+      const alert = await within(dialog).findByRole('alert');
+      expect(alert).toHaveTextContent('No se pudo guardar. Revisa tu conexión.');
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Mi tablero');
+      expect(window.location.hash).toBe(`#k=${CODE}`);
+
+      await user.click(within(alert).getByRole('button', { name: 'Reintentar' }));
+      expect(await screen.findByRole('heading', { level: 1, name: 'Tableros de tareas para tu equipo' })).toBeVisible();
+    });
+  });
 });

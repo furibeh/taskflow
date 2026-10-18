@@ -170,17 +170,17 @@ volver al inicio con el aviso, y el enlace da "Enlace no válido".
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T040 [P] [US4] Add failing tests for `deleteBoard(boardId)` to `packages/domain/tests/unit/use-cases/board.test.ts`: removes the board and its tasks and people from the in-memory repositories; unknown id → `BOARD_NOT_FOUND`; other boards untouched
-- [ ] T041 [P] [US4] Add the delete block to `apps/api/tests/integration/board-manage.test.ts`: `DELETE /api/v1/board` → `204`; afterwards `GET /board`, `GET /tasks`, `POST /tasks` and `GET /people` with that code → `401 INVALID_LINK` identical to an invalid code; no `person` or `task` rows (including soft-deleted) remain for that `board_id`; the other board and its data are intact; a route registered only in the test that throws a `pg` error `{code: '23503', constraint: 'task_board_id_fkey'}` (and `person_board_id_fkey`) → `401 INVALID_LINK` (research R20); a second `DELETE /board` with the same code → `401 INVALID_LINK`
-- [ ] T042 [P] [US4] Add the `deleteBoard` case (204/401) to `apps/api/tests/contract/boards.contract.test.ts`
-- [ ] T043 [P] [US4] Add web tests to `apps/web/tests/access/board-settings.test.tsx` (delete): the confirmation shows the name, `taskCount` and `personCount` and that the action cannot be undone; the button stays disabled until the typed text equals the name (after trimming); on success the page goes to `HomePage` with "Tablero «nombre» borrado" announced and the fragment `#k=` removed; on error "Reintentar" is offered and nothing changes; no axe violations
+- [X] T040 [P] [US4] Add failing tests for `deleteBoard(boardId)` to `packages/domain/tests/unit/use-cases/board.test.ts`: removes the board and its tasks and people from the in-memory repositories; unknown id → `BOARD_NOT_FOUND`; other boards untouched
+- [X] T041 [P] [US4] Add the delete block to `apps/api/tests/integration/board-manage.test.ts`: `DELETE /api/v1/board` → `204`; afterwards `GET /board`, `GET /tasks`, `POST /tasks` and `GET /people` with that code → `401 INVALID_LINK` identical to an invalid code; no `person` or `task` rows (including soft-deleted) remain for that `board_id`; the other board and its data are intact; a route registered only in the test that throws a `pg` error `{code: '23503', constraint: 'task_board_id_fkey'}` (and `person_board_id_fkey`) → `401 INVALID_LINK` (research R20); a second `DELETE /board` with the same code → `401 INVALID_LINK`
+- [X] T042 [P] [US4] Add the `deleteBoard` case (204/401) to `apps/api/tests/contract/boards.contract.test.ts`
+- [X] T043 [P] [US4] Add web tests to `apps/web/tests/access/board-settings.test.tsx` (delete): the confirmation shows the name, `taskCount` and `personCount` and that the action cannot be undone; the button stays disabled until the typed text equals the name (after trimming); on success the page goes to `HomePage` with "Tablero «nombre» borrado" announced and the fragment `#k=` removed; on error "Reintentar" is offered and nothing changes; no axe violations
 
 ### Implementation for User Story 4
 
-- [ ] T044 [US4] Implement `deleteBoard` in `packages/domain/src/use-cases/board.ts`
-- [ ] T045 [US4] Add `DELETE /board` (`204`) to `apps/api/src/http/routes/board.ts` and map foreign-key violations (`23503`) on `person_board_id_fkey` or `task_board_id_fkey` to `401 INVALID_LINK` in `apps/api/src/http/plugins/error-handler.ts`
-- [ ] T046 [US4] Add `useDeleteBoard` to `apps/web/src/api/board.ts`, create `apps/web/src/features/access/DeleteBoardDialog.tsx`, add "Borrar tablero" to the "Tablero" menu (creating the menu as in T038 if it does not exist yet), and on success call `clearAccessCode()`, clear the query cache, reset `document.title` to "TaskFlow" and show `HomePage` with the notice in `apps/web/src/app/App.tsx`
-- [ ] T047 [US4] Add the US4 block to `e2e/tests/boards.spec.ts`: delete the board, check the notice and that its link shows "Enlace no válido" with "Crear un tablero nuevo"
+- [X] T044 [US4] Implement `deleteBoard` in `packages/domain/src/use-cases/board.ts`
+- [X] T045 [US4] Add `DELETE /board` (`204`) to `apps/api/src/http/routes/board.ts` and map foreign-key violations (`23503`) on `person_board_id_fkey` or `task_board_id_fkey` to `401 INVALID_LINK` in `apps/api/src/http/plugins/error-handler.ts`
+- [X] T046 [US4] Add `useDeleteBoard` to `apps/web/src/api/board.ts`, create `apps/web/src/features/access/DeleteBoardDialog.tsx`, add "Borrar tablero" to the "Tablero" menu (creating the menu as in T038 if it does not exist yet), and on success call `clearAccessCode()`, clear the query cache, reset `document.title` to "TaskFlow" and show `HomePage` with the notice in `apps/web/src/app/App.tsx`
+- [X] T047 [US4] Add the US4 block to `e2e/tests/boards.spec.ts`: delete the board, check the notice and that its link shows "Enlace no válido" with "Crear un tablero nuevo"
 
 **Checkpoint**: las cuatro historias funcionan de forma independiente.
 

@@ -84,6 +84,11 @@ export const createFakeServer = () => {
         personCount: people.length,
       });
     }
+    if (url.pathname === '/api/v1/board' && method === 'DELETE') {
+      // Como el servidor real: el código del tablero borrado deja de funcionar (FR-116).
+      rejectedCodes.add(authorization?.replace(/^Bearer /, '') ?? '');
+      return new Response(null, { status: 204 });
+    }
     if (url.pathname === '/api/v1/board' && method === 'PATCH') {
       const name = (JSON.parse(String(init?.body)) as { name: string }).name.trim();
       if (name.length < 1 || Array.from(name).length > 60) return problem(400, 'VALIDATION_ERROR');

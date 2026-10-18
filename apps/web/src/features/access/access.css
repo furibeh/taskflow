@@ -39,3 +39,6 @@
   width: 100%;
   justify-content: flex-start;
 }
+.board-settings__warning {
+  margin: 0;
+}

@@ -138,3 +138,39 @@ test('US3: cambiar el nombre del tablero y verlo al recargar en otra pestaña', 
   await expect(other).toHaveTitle('«Diseño y UX» · TaskFlow');
   await other.close();
 });
+
+test('US4: borrar el tablero confirmando con su nombre; su enlace deja de funcionar', async ({ page, context }) => {
+  const link = await openCreated(page, await createBoard(page, 'Equipo temporal'), 'Equipo temporal');
+  await addPerson(page, 'Ana');
+  await page.getByLabel('Título').fill('Tarea que se borrará');
+  await page.getByRole('button', { name: 'Crear tarea' }).click();
+  await showColumn(page, 'Pendiente');
+  await expect(
+    columnRegion(page, 'Pendiente').getByRole('button', { name: 'Tarea que se borrará', exact: true }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Tablero', exact: true }).click();
+  await page.getByRole('button', { name: 'Borrar tablero' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Borrar tablero' });
+  await expect(
+    dialog.getByText('Se borrará el tablero «Equipo temporal» con 1 tarea y 1 persona. No se puede deshacer.'),
+  ).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  const confirm = dialog.getByRole('button', { name: 'Borrar tablero' });
+  await expect(confirm).toBeDisabled();
+  await dialog.getByLabel('Escribe «Equipo temporal» para confirmar').fill('Equipo temporal');
+  await confirm.click();
+
+  await expect(page.locator('.home__notice')).toHaveText('Tablero «Equipo temporal» borrado');
+  await expect(page.getByTestId('live-region')).toHaveText('Tablero «Equipo temporal» borrado');
+  await expect(page.getByRole('heading', { name: 'Tableros de tareas para tu equipo' })).toBeVisible();
+  await expect(page).toHaveTitle('TaskFlow');
+  expect(new URL(page.url()).hash).toBe('');
+
+  const other = await context.newPage();
+  await other.goto(link);
+  await expect(other.getByRole('heading', { name: 'Enlace no válido' })).toBeVisible();
+  await expect(other.getByRole('button', { name: 'Crear un tablero nuevo' })).toBeVisible();
+  await other.close();
+});

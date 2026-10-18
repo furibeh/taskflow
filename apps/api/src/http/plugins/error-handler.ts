@@ -9,6 +9,18 @@ import { DomainFailure, domainCode, domainExtras, domainStatus, sendProblem } fr
 
 const BODY_LIMIT_BYTES = 16 * 1024;
 
+const FOREIGN_KEY_VIOLATION = '23503';
+const BOARD_FOREIGN_KEYS = new Set(['person_board_id_fkey', 'task_board_id_fkey']);
+
+/**
+ * Escritura en vuelo sobre un tablero que se acaba de borrar (research R20): la autenticación lo
+ * resolvió, pero al insertar ya no existe. Se responde igual que a un enlace no válido (FR-116).
+ */
+const isDeletedBoardWrite = (error: unknown): boolean => {
+  const pg = error as { code?: unknown; constraint?: unknown };
+  return pg.code === FOREIGN_KEY_VIOLATION && typeof pg.constraint === 'string' && BOARD_FOREIGN_KEYS.has(pg.constraint);
+};
+
 type Params = Record<string, unknown>;
 
 /** Traduce un issue de Zod al formato {field, rule, limit} del contrato. */
@@ -57,6 +69,7 @@ export const errorHandlerPlugin = fp(async (app: FastifyInstance) => {
         errors: error.validation.map((e) => toIssue(e, context)),
       });
     }
+    if (isDeletedBoardWrite(error)) return sendProblem(reply, 401, 'INVALID_LINK');
     if (error instanceof DomainFailure) {
       return sendProblem(reply, domainStatus(error.domainError), domainCode(error.domainError), domainExtras(error.domainError));
     }
