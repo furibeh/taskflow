@@ -39,10 +39,18 @@ sola vez** su enlace (`http://localhost:5173/#k=…`). La web queda en <http://l
 donde se pueden crear más tableros, y la API en <http://localhost:3000/api/health>.
 
 Para desarrollar con recarga en caliente fuera de los contenedores, arranca solo la base de datos
-(`docker compose up -d db`) y, con las variables de `.env` exportadas en cada terminal
-(`set -a; . ./.env; set +a`; la API no lee `.env` por sí sola) y `TRUST_PROXY=127.0.0.1,::1`,
-ejecuta `npm run db:migrate -w apps/api`, `npm run board:init -w apps/api` y, en dos terminales,
-`npm run dev -w apps/api` y `npm run dev -w apps/web` (Vite reenvía `/api` al puerto 3000).
+y ejecuta la API y la web con Node. La API no lee `.env` por sí sola: exporta sus variables en
+cada terminal.
+
+```bash
+docker compose up -d --wait db            # --wait: espera a que PostgreSQL acepte conexiones
+set -a; . ./.env; set +a                  # en cada terminal
+export TRUST_PROXY=127.0.0.1,::1          # la API confía en el proxy de Vite (IP real del cliente)
+npm run db:migrate -w apps/api
+npm run board:init -w apps/api            # la primera vez: crea "Mi tablero" e imprime su enlace
+npm run dev -w apps/api                   # terminal 1: API en :3000
+npm run dev -w apps/web                   # terminal 2: web en :5173, reenvía /api a la API
+```
 
 ## Scripts
 

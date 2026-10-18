@@ -140,9 +140,12 @@ npx playwright install chromium        # una vez, desde e2e/
 npm run lint && npm run lint:deps && npm run typecheck
 npm run format                         # Prettier sobre todo el repositorio
 
-set -a; . ./.env; set +a               # fuera de Compose la API no lee .env por sí sola
-npm run dev -w apps/api                # API con recarga (tsx watch); con TRUST_PROXY=127.0.0.1,::1
-npm run dev -w apps/web                # web con Vite; reenvía /api a API_PROXY_TARGET (:3000)
+# Fuera de Compose (pasos completos en README.md, «Arranque»):
+docker compose up -d --wait db         # sin --wait, la migración falla si la BD aún no está lista
+set -a; . ./.env; set +a               # la API no lee .env por sí sola; en cada terminal
+export TRUST_PROXY=127.0.0.1,::1       # confiar en el proxy de Vite
+npm run dev -w apps/api                # API con recarga (tsx watch) en :3000
+npm run dev -w apps/web                # web con Vite en :5173; reenvía /api a API_PROXY_TARGET
 
 npm run db:migrate -w apps/api         # aplicar migraciones
 npm run db:migrate:down -w apps/api    # revertir una
