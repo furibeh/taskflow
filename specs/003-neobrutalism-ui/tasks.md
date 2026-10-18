@@ -137,9 +137,9 @@ personas y detalle de tarea en claro y oscuro con 0 violaciones.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T021 [P] Update `CLAUDE.md`: add feature 003 to "Estado del repositorio" (T001–T023, decisions D17–D18 of its `plan.md`), mention under "Arquitectura planificada" that colors/shapes live only in `apps/web/src/ui/tokens.css` (checked by `apps/web/tests/ui/tokens.test.ts`) and that the font is self-hosted with `@fontsource-variable/space-grotesk`
-- [ ] T022 Run the full gate: `npm run lint && npm run lint:deps && npm run typecheck && npm test && npm run test:e2e`; report results faithfully
-- [ ] T023 Manual validation of `specs/003-neobrutalism-ui/quickstart.md` section 2 (scenarios 1–12, including grayscale SC-007, zoom 200 %, forced colors and blocked `woff2`); record the outcome and any defect (each defect gets a reproducing test before its fix)
+- [X] T021 [P] Update `CLAUDE.md`: add feature 003 to "Estado del repositorio" (T001–T023, decisions D17–D18 of its `plan.md`), mention under "Arquitectura planificada" that colors/shapes live only in `apps/web/src/ui/tokens.css` (checked by `apps/web/tests/ui/tokens.test.ts`) and that the font is self-hosted with `@fontsource-variable/space-grotesk`
+- [X] T022 Run the full gate: `npm run lint && npm run lint:deps && npm run typecheck && npm test && npm run test:e2e`; report results faithfully
+- [ ] T023 Manual validation of `specs/003-neobrutalism-ui/quickstart.md` section 2 (scenarios 1–12, including grayscale SC-007, zoom 200 %, forced colors and blocked `woff2`); record the outcome and any defect (each defect gets a reproducing test before its fix). *Comprobación previa automatizada (2026-10-17, escritorio)*: escenarios 8 (acromatopsia emulada: estados por su nombre y "Guardando…" por texto y borde discontinuo), 9 (640 px ≈ zoom 200 %: sin desplazamiento horizontal), 10 (`forced-colors: active`: bordes y foco visibles, sin sombras) y 11 (`woff2` bloqueados: texto inmediato con la fuente del sistema) correctos. Pendiente la validación manual completa
 
 ---
 
