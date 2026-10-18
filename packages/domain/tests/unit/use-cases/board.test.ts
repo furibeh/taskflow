@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_BOARD_NAME } from '../../../src/shared/limits';
 import {
   createBoard,
+  deleteBoard,
   getBoardDetails,
   initBoard,
   regenerateAccessCode,
@@ -172,6 +173,33 @@ describe('casos de uso del tablero', () => {
 
     it('si el tablero ya no existe devuelve BOARD_NOT_FOUND', async () => {
       expect(await renameBoard(deps, BOARD_ID, 'Diseño')).toEqual({ ok: false, error: { code: 'BOARD_NOT_FOUND' } });
+    });
+  });
+
+  describe('deleteBoard (US4, FR-116, FR-117)', () => {
+    const OTHER = 'b0000000-0000-4000-8000-000000000002';
+
+    it('borra el tablero con sus tareas y personas y no toca los demás', async () => {
+      const created = await createBoard(deps, { id: BOARD_ID, name: 'Equipo' });
+      await createBoard(deps, { id: OTHER, name: 'Otro' });
+      if (!created.ok || !created.value.created) throw new Error('esperaba creación');
+      const ana = people.add(BOARD_ID, 'Ana');
+      people.add(OTHER, 'Luis');
+      const base = { description: '', status: 'pending' as const, createdAt: new Date(0), updatedAt: new Date(0) };
+      await tasks.insert({ ...base, id: 't1', boardId: BOARD_ID, title: 'Una', assigneeId: ana });
+      await tasks.insert({ ...base, id: 't2', boardId: OTHER, title: 'Ajena', assigneeId: null });
+
+      expect(await deleteBoard(deps, BOARD_ID)).toEqual({ ok: true, value: undefined });
+
+      expect(await deps.boards.findById(BOARD_ID)).toBeNull();
+      expect(await resolveBoard(deps, created.value.accessCode)).toBeNull();
+      expect(await tasks.findById(BOARD_ID, 't1')).toBeNull();
+      expect(await people.findById(BOARD_ID, ana)).toBeNull();
+      expect(await deps.boards.getStats(OTHER)).toEqual({ taskCount: 1, personCount: 1 });
+    });
+
+    it('un tablero inexistente es BOARD_NOT_FOUND', async () => {
+      expect(await deleteBoard(deps, BOARD_ID)).toEqual({ ok: false, error: { code: 'BOARD_NOT_FOUND' } });
     });
   });
 });

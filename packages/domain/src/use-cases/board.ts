@@ -89,6 +89,16 @@ export const renameBoard = async (
   return board ? ok(board) : err({ code: 'BOARD_NOT_FOUND' });
 };
 
+/**
+ * Borra el tablero con todas sus tareas y personas, de forma definitiva (FR-116, D14). Su código
+ * deja de funcionar en ese momento. BOARD_NOT_FOUND si no existe (o ya lo borró otra persona).
+ */
+export const deleteBoard = async (
+  deps: Pick<BoardDeps, 'boards'>,
+  boardId: string,
+): Promise<Result<void, DomainError>> =>
+  (await deps.boards.delete(boardId)) ? ok(undefined) : err({ code: 'BOARD_NOT_FOUND' });
+
 /** Sustituye el código del tablero; el anterior deja de funcionar inmediatamente (FR-028b). */
 export const regenerateAccessCode = async (
   deps: BoardDeps,
