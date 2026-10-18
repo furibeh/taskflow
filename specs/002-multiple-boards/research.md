@@ -190,3 +190,8 @@ Punto de partida verificado en el código:
 - **Alternativas**: FK compuesta `(board_id, assignee_id)` para que la BD impida asignaciones
   cruzadas (más robusto pero requiere índice único `(board_id, id)` en `person` y cambiar la
   FK de `task`; se deja anotado como mejora, ya que el dominio lo garantiza y se prueba).
+- **Riesgo aceptado** (usuario, 2026-10-17, tras T031): los ids de tareas y personas son
+  globales. Reutilizar con el código de B el id de un recurso de A responde `409 ID_CONFLICT`:
+  no revela datos de A, pero confirma que ese UUID existe en algún tablero. Exige conocer un
+  UUID aleatorio de 122 bits. Evitarlo requeriría claves compuestas `(board_id, id)` en
+  `task` y `person` (cambio de esquema); no se hace. Cubierto por `board-isolation.test.ts`.
