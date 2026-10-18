@@ -81,4 +81,13 @@ describe('contrato del tablero (feature 002)', () => {
       await limited.close();
     }
   });
+
+  it('renameBoard 200, 400 y 401', async () => {
+    const patch = (payload: object, headers: Record<string, string> = t.authHeader()) =>
+      t.app.inject({ method: 'PATCH', url: '/api/v1/board', headers, payload });
+
+    expectResponse('renameBoard', 200, await patch({ name: 'Diseño y UX' }));
+    expectResponse('renameBoard', 400, await patch({ name: '' }));
+    expectResponse('renameBoard', 401, await patch({ name: 'Diseño' }, { authorization: 'Bearer x' }));
+  });
 });

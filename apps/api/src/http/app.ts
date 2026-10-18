@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Clock } from '@taskflow/domain';
+import type { BoardRepository, Clock } from '@taskflow/domain';
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify';
 import {
   serializerCompiler,
@@ -31,6 +31,8 @@ export interface AppDeps {
   readonly trustProxy?: readonly string[];
   /** Creación de tableros desde la web (plan D12); por defecto, activada con 10 por IP y hora. */
   readonly boardCreation?: BoardCreationOptions;
+  /** Repositorio de tableros alternativo; solo lo usan las pruebas para simular carreras. */
+  readonly boards?: BoardRepository;
 }
 
 export const BODY_LIMIT_BYTES = 16 * 1024;
@@ -54,7 +56,7 @@ export const buildApp = async (deps: AppDeps): Promise<FastifyInstance> => {
   await app.register(errorHandlerPlugin);
   await app.register(securityPlugin, { rateLimits });
 
-  const boards = new KyselyBoardRepository(deps.db);
+  const boards = deps.boards ?? new KyselyBoardRepository(deps.db);
   const people = new KyselyPersonRepository(deps.db);
   const taskDeps = { tasks: new KyselyTaskRepository(deps.db), people, clock: deps.clock };
   const peopleDeps = { people, clock: deps.clock };
