@@ -1,11 +1,11 @@
 # Quickstart Run: Múltiples tableros
 
-**Fecha**: 2026-10-18 | **Guía**: [quickstart.md](../quickstart.md) | **Tareas**: T054, T055
+**Fecha**: 2026-10-18 | **Guía**: [quickstart.md](../quickstart.md) | **Tareas**: T054, T055, T056
 
 Registro de la validación del quickstart de la feature 002. Las secciones automatizables las
 ejecutó el asistente sobre una instalación aislada (`docker compose -p taskflow-qs`, con su
-propio volumen, desmontada al terminar). **Quedan pendientes de una persona** la medición de
-SC-101 (escenario 1b) y la revisión con lector de pantalla (T056).
+propio volumen, desmontada al terminar). La medición de SC-101 y la revisión con lector de
+pantalla (T056) las hizo el usuario (sección 8).
 
 ## 1. Configuración nueva
 
@@ -47,7 +47,7 @@ estado 153 ms; equivalentes a los de la 001 con un solo tablero.
 | # | Escenario | Cubierto por |
 |---|---|---|
 | 1, 2, 5 | Inicio sin enlace, crear, copiar y abrir | `boards.spec.ts` (US1), `create-board.test.tsx` |
-| 1b | Primer uso en < 60 s (SC-101) | ⏳ **Pendiente**: requiere cronometrar a una persona que no conozca TaskFlow |
+| 1b | Primer uso en < 60 s (SC-101) | ✅ manual (usuario): el flujo se completa en menos de 60 s |
 | 3 | Nombre inválido | `create-board.test.tsx`, `boards-create.test.ts` |
 | 3b | Respuesta perdida al crear (FR-104) | `create-board.test.tsx`, `boards-create.test.ts` (repetición `200` sin código) |
 | 4 | Cerrar sin copiar (FR-103a), incluido Escape | `boards.spec.ts`, `create-board.test.tsx` |
@@ -56,7 +56,7 @@ estado 153 ms; equivalentes a los de la 001 con un solo tablero.
 | 10, 11 | Borrar y enlace tras borrar (US4) | `boards.spec.ts`, `board-settings.test.tsx`, `board-manage.test.ts` |
 | 12 | Límite de creación | ✅ manual: con `BOARD_CREATION_PER_HOUR=2`, la tercera creación a través del proxy da `429 BOARD_CREATION_LIMITED` |
 | 13 | Creación desactivada | ✅ manual: `public-config` → `false` y `POST /boards` → `403 BOARD_CREATION_DISABLED` |
-| 14 | Teclado y 320 px (SC-107) | `boards.spec.ts` en `mobile-320` con axe; lector de pantalla ⏳ pendiente (T056) |
+| 14 | Teclado y 320 px (SC-107) | `boards.spec.ts` en `mobile-320` con axe; lector de pantalla en la sección 8 |
 
 ## 5. Consola (FR-119)
 
@@ -86,3 +86,25 @@ estado 153 ms; equivalentes a los de la 001 con un solo tablero.
 |---|---|
 | `db:migrate:down` revierte `0005` sin perder tareas ni personas | ✅ |
 | `db:migrate` la vuelve a aplicar; los tableros se llaman "Mi tablero" (D15: `down` pierde los nombres) | ✅ |
+
+## 8. Pruebas manuales del usuario (SC-101, T056)
+
+Sobre la instalación aislada, con Firefox y Orca 50.3 (KDE, Wayland), solo con teclado.
+
+| # | Paso | Resultado |
+|---|---|---|
+| — | SC-101: crear un tablero, copiar el enlace y crear la primera tarea | ✅ en menos de 60 s |
+| 1 | Pantalla de inicio | ✅ |
+| 2 | Validación del nombre | ✅ |
+| 3 | Crear: "Guardando…" y diálogo con el enlace | ✅ |
+| 4 | Cerrar sin copiar (FR-103a) | ❌ → ✅ corregido: Orca no anunciaba la pregunta "¿Cerrar de todos modos?" |
+| 5 | Copiar ("Enlace copiado") y abrir | ✅ |
+| 6 | Menú "Tablero" (contraído/expandido) y renombrar | ✅ |
+| 7 | Borrar: aviso, botón no disponible hasta escribir el nombre, aviso final | ✅ |
+
+**Defecto del paso 4 y corrección**: la pregunta aparecía sin mover el foco y fuera de una región
+`aria-live`. Ahora el foco pasa a "Cancelar", dentro del grupo etiquetado con la pregunta (el
+lector la lee al entrar), y al cancelar vuelve a "Copiar enlace". Pruebas de regresión en
+`create-board.test.tsx` y `boards.spec.ts` (foco comprobado en Chromium). Pendiente: que el
+usuario repita el paso 4 con Orca sobre la corrección.
+

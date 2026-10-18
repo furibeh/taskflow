@@ -201,10 +201,11 @@ volver al inicio con el aviso, y el enlace da "Enlace no válido".
 - [X] T051 [P] Extend `e2e/tests/performance.spec.ts` with 100 boards in the database (created with `board:create` only up to the missing number, so repeated runs do not accumulate boards) (implemented by inserting the missing boards with SQL in `ensureBoards`, 20 tasks each, instead of up to 99 `board:create` processes) and check that SC-003 still holds for one of them (SC-106)
 - [X] T052 [P] Extend `e2e/tests/security-headers.spec.ts` and `e2e/tests/access.spec.ts`: the home page and the invalid link page keep the CSP and `no-referrer`, and `public-config` returns only `boardCreationEnabled`
 - [X] T053 [P] Update `README.md` and `CLAUDE.md`: several boards, web creation and its variables, console commands `board:create`/`board:list`/`board:rotate --board`/`board:delete`, decisions D12–D16, E2E setup (T018), and the repository status for feature 002 (the contract path in `CLAUDE.md` is already updated by T003)
-- [ ] T054 Run the manual validation of `specs/002-multiple-boards/quickstart.md` including the timing of SC-101 (scenario 1b), and record the result in `specs/002-multiple-boards/checklists/quickstart-run.md` (same format as the 001)
-  - **Parcial (2026-10-18)**: secciones 1–7 ejecutadas y registradas en `checklists/quickstart-run.md`; queda la medición de SC-101 (escenario 1b) con una persona.
+- [X] T054 Run the manual validation of `specs/002-multiple-boards/quickstart.md` including the timing of SC-101 (scenario 1b), and record the result in `specs/002-multiple-boards/checklists/quickstart-run.md` (same format as the 001)
+  - **Resultado (2026-10-18)**: secciones 1–7 ejecutadas por el asistente y SC-101 (escenario 1b) por el usuario, en menos de 60 s; registro en `checklists/quickstart-run.md`.
 - [X] T055 Run `npm run lint`, `npm run lint:deps`, `npm run typecheck`, `npm test`, `npm run test:e2e` and `npm audit --audit-level=high`; all must pass before closing the feature (constitución, definición de terminado)
 - [ ] T056 Manual screen reader review (NVDA or Orca) of the new flows: create a board, copy the link, FR-103a confirmation, rename and delete (SC-107)
+  - **Resultado (2026-10-18, usuario, Orca 50.3 + Firefox)**: pasos 1–3 y 5–7 OK. Paso 4 (FR-103a): Orca no anunciaba la confirmación; corregido moviendo el foco a "Cancelar" dentro del grupo etiquetado con la pregunta (y de vuelta a "Copiar enlace" al cancelar), con pruebas de regresión. Falta repetir el paso 4 con Orca sobre la corrección.
 
 ---
 
