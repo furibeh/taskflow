@@ -191,3 +191,43 @@ test('recorrido completo solo con teclado: crear, cambiar estado, asignar, filtr
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Con teclado', exact: true })).toBeAttached();
 });
+
+test.describe('modo oscuro en el resto de pantallas (feature 003, US3)', () => {
+  test.use({ colorScheme: 'dark' });
+
+  const expectAll = async (page: Page) => {
+    await expectNoA11yViolations(page);
+    await expectTapTargets(page);
+    await expectNoHorizontalScroll(page);
+  };
+
+  test('inicio y "Enlace no válido" sin incumplimientos (SC-001)', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Tableros de tareas para tu equipo' })).toBeVisible();
+    await expectAll(page);
+
+    // Carga completa: entre ambas URL solo cambia el fragmento.
+    await page.goto('about:blank');
+    await page.goto('/#k=incorrecto');
+    await expect(page.getByRole('heading', { name: 'Enlace no válido' })).toBeVisible();
+    await expectAll(page);
+  });
+
+  test('menú "Tablero", personas y detalle de tarea sin incumplimientos (SC-001)', async ({ page }) => {
+    await openBoard(page);
+    await page.getByRole('button', { name: 'Tablero', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Cambiar nombre' })).toBeVisible();
+    await expectAll(page);
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('button', { name: 'Personas' }).click();
+    await expect(page.getByRole('dialog', { name: 'Personas del equipo' })).toBeVisible();
+    await expectAll(page);
+    await page.keyboard.press('Escape');
+
+    await showColumn(page, 'Pendiente');
+    await page.getByRole('button', { name: 'Preparar demo', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Preparar demo' })).toBeVisible();
+    await expectAll(page);
+  });
+});
