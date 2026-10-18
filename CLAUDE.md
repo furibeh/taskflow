@@ -13,6 +13,9 @@ con Spec Kit, por fases y pruebas primero; las tareas hechas están marcadas `[X
   web, nombre, borrado definitivo y consola de administración. Implementada y validada (incluidas
   las pruebas manuales T054 y T056). Decisiones D12–D16 de su `plan.md`
   (D12 sustituye a D4 de la 001); riesgo aceptado de ids globales en su `research.md` (R27).
+- `specs/003-neobrutalism-ui/` (T001–T023): estilo visual neobrutalista de la web (solo
+  presentación, claro y oscuro). Decisiones D17–D18 de su `plan.md`; valores y contrastes en su
+  `contracts/ui-tokens.md`.
 
 Cada fase se entrega en una rama `pr/NN-…` desde `main` con un commit por capa.
 
@@ -25,8 +28,9 @@ Fuente de verdad, en orden de autoridad:
 1. `.specify/memory/constitution.md` — reglas no negociables. Las más operativas:
    - No declarar una tarea terminada si sus pruebas fallan o no se ejecutaron.
    - Toda decisión que afecte a la arquitectura o a la seguridad se **explica y se espera
-     aprobación del usuario antes de aplicarla**. Las decisiones D1–D11 (001) y D12–D16 (002) ya
-     están aprobadas (2026-10-17); cualquier decisión nueva o desviación requiere aprobación.
+     aprobación del usuario antes de aplicarla**. Las decisiones D1–D11 (001), D12–D16 (002) y
+     D17–D18 (003) ya están aprobadas (2026-10-17); cualquier decisión nueva o desviación
+     requiere aprobación.
    - Cambios de esquema solo mediante migraciones versionadas con `up`/`down`.
 2. `specs/<feature>/spec.md` — requisitos (FR-###, SC-###) y clarificaciones. La 002 amplía la
    001 y sustituye explícitamente FR-001 (tablero único) y la entidad Tablero.
@@ -62,6 +66,11 @@ apps/api (Fastify 5)       ──▶ contracts + domain; repositorios Kysely ─
 - **`apps/web`**: solo presentación; importa `contracts`, nunca `apps/api`. Sin lógica de
   negocio (p. ej., la coincidencia de búsqueda sin tildes se hace en el servidor).
 - Los límites se verifican con `dependency-cruiser` (`npm run lint:deps`).
+- **Estilo** (D18): colores, bordes, sombras, radios, tipografía y movimiento solo en
+  `apps/web/src/ui/tokens.css`; el resto de hojas usa `var(--…)`. `apps/web/tests/ui/tokens.test.ts`
+  comprueba los contrastes de `specs/003-neobrutalism-ui/contracts/ui-tokens.md` y rechaza
+  colores literales fuera de `tokens.css`. La tipografía (Space Grotesk, D17) se autoaloja con
+  `@fontsource-variable/space-grotesk`: no uses CDNs de fuentes (CSP `'self'`).
 
 Comportamientos transversales que no se deducen de un solo archivo:
 
