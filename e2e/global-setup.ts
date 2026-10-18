@@ -20,10 +20,15 @@ export default async function globalSetup(): Promise<void> {
     return;
   }
   run('db:migrate');
-  // Con varios tableros (feature 002), board:rotate exige --board; se crea uno propio.
-  const output = run('board:create', '--name', 'E2E');
+  // Con varios tableros (feature 002) se reutiliza el tablero "E2E" si ya existe (su código se
+  // regenera) y solo se crea la primera vez, para no acumular tableros entre ejecuciones.
+  const existing = run('board:list')
+    .split('\n')
+    .map((line) => line.split(' | '))
+    .find((columns) => columns[1] === 'E2E')?.[0];
+  const output = existing ? run('board:rotate', '--board', existing) : run('board:create', '--name', 'E2E');
   const code = /#k=([A-Za-z0-9_-]{43})/.exec(output)?.[1];
-  if (!code) throw new Error('No se pudo obtener el código de acceso de board:create');
+  if (!code) throw new Error('No se pudo obtener el código de acceso del tablero E2E');
   mkdirSync(dirname(ACCESS_CODE_FILE), { recursive: true });
   writeFileSync(ACCESS_CODE_FILE, code, { mode: 0o600 });
 }
