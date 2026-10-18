@@ -80,6 +80,43 @@ test('modo oscuro: sin incumplimientos WCAG 2.1 AA (contraste incluido)', async 
   await expectNoA11yViolations(page);
 });
 
+test('movimiento reducido: los botones no animan el desplazamiento (FR-007, SC-005)', async ({ page }) => {
+  await openBoard(page);
+  const button = page.getByRole('button', { name: 'Crear tarea' });
+  const read = () =>
+    button.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { transform: s.transform, durations: s.transitionDuration.split(', ') };
+    });
+
+  expect((await read()).transform).toBe('none');
+  await button.hover();
+  // El botón se hunde sobre su sombra con una transición corta.
+  await expect.poll(async () => (await read()).transform).not.toBe('none');
+  expect((await read()).durations).toContain('0.08s');
+
+  await page.mouse.move(0, 0);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await button.hover();
+  expect((await read()).durations.every((d) => d === '0s')).toBe(true);
+});
+
+test('foco visible y separado del borde en botones, campos y casillas (FR-008)', async ({ page }) => {
+  await openBoard(page);
+  for (const control of [
+    page.getByRole('button', { name: 'Crear tarea' }),
+    page.getByLabel('Título'),
+    page.getByRole('checkbox', { name: 'Hecha' }),
+  ]) {
+    await control.focus();
+    const outline = await control.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { visible: el.matches(':focus-visible'), style: s.outlineStyle, width: s.outlineWidth, offset: s.outlineOffset };
+    });
+    expect(outline).toEqual({ visible: true, style: 'solid', width: '3px', offset: '3px' });
+  }
+});
+
 test('recorrido completo solo con teclado: crear, cambiar estado, asignar, filtrar, borrar y deshacer', async ({
   page,
 }) => {
