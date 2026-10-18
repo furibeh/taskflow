@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { es } from '../../i18n/es';
 import { Button } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
@@ -30,6 +30,18 @@ export const NewBoardLinkDialog = ({ board, onOpen, onClose }: NewBoardLinkDialo
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const announce = useAnnounce();
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const copyRef = useRef<HTMLButtonElement>(null);
+  const wasConfirming = useRef(false);
+
+  // La pregunta aparece sin mover el foco y el lector de pantalla no la anunciaba (T056): el foco
+  // pasa a "Cancelar", dentro del grupo etiquetado con la pregunta, y al cancelar vuelve a
+  // "Copiar enlace" en lugar de perderse.
+  useEffect(() => {
+    if (confirmingClose) cancelRef.current?.focus();
+    else if (wasConfirming.current) copyRef.current?.focus();
+    wasConfirming.current = confirmingClose;
+  }, [confirmingClose]);
 
   const copy = async () => {
     try {
@@ -73,12 +85,14 @@ export const NewBoardLinkDialog = ({ board, onOpen, onClose }: NewBoardLinkDialo
               <Button variant="danger" onClick={onClose}>
                 {es.newBoardLink.closeAnyway}
               </Button>
-              <Button onClick={() => setConfirmingClose(false)}>{es.newBoardLink.cancel}</Button>
+              <Button ref={cancelRef} onClick={() => setConfirmingClose(false)}>
+                {es.newBoardLink.cancel}
+              </Button>
             </div>
           </div>
         ) : (
           <div className="new-board__actions">
-            <Button variant="primary" onClick={() => void copy()}>
+            <Button ref={copyRef} variant="primary" onClick={() => void copy()}>
               {es.newBoardLink.copy}
             </Button>
             <Button onClick={() => onOpen(board.accessCode)}>{es.newBoardLink.open}</Button>

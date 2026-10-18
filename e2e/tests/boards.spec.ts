@@ -53,8 +53,11 @@ test('US1: Escape en el aviso sin copiar el enlace pide confirmación (FR-103a)'
 
   await page.keyboard.press('Escape');
   await expect(dialog.getByText('No podrás volver a ver este enlace. ¿Cerrar de todos modos?')).toBeVisible();
-  await dialog.getByRole('button', { name: 'Cancelar' }).click();
+  // El foco entra en la confirmación para que el lector de pantalla la anuncie (T056).
+  await expect(dialog.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+  await page.keyboard.press('Enter');
   await expect(dialog.getByLabel('Enlace del tablero')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Copiar enlace' })).toBeFocused();
 
   await page.keyboard.press('Escape');
   await dialog.getByRole('button', { name: 'Cerrar de todos modos' }).click();
