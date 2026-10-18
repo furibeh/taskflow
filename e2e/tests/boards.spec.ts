@@ -73,6 +73,17 @@ test('US1: sin desplazamiento horizontal en la pantalla de inicio y el aviso del
   expect(await scrolls()).toBe(false);
 });
 
+test('US1: el aviso del enlace nuevo en modo oscuro y "Crear tablero" como acción principal (feature 003, FR-006)', async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Crear tablero' })).toHaveClass(/\bbtn--primary\b/);
+  await createBoard(page, 'Equipo en oscuro');
+  await expectNoA11yViolations(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+});
+
 /** Abre el tablero recién creado desde su aviso. */
 const openCreated = async (page: Page, dialog: Awaited<ReturnType<typeof createBoard>>, name: string) => {
   const link = await dialog.getByLabel('Enlace del tablero').inputValue();

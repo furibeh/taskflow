@@ -67,11 +67,12 @@
 }
 .task-detail__meta dd {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 .task-detail__subheading {
   margin: 0 0 var(--space-1);
   font-size: 1rem;
+  font-weight: 700;
 }
 .task-detail__description {
   margin: 0;
@@ -91,7 +92,7 @@
 .task-detail__saving {
   margin: 0;
   color: var(--color-text-muted);
-  font-weight: 600;
+  font-weight: 700;
 }
 .task-detail__actions {
   display: flex;
@@ -110,6 +111,6 @@
 }
 .task-detail__warning {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
