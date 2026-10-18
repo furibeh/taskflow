@@ -69,3 +69,49 @@ test('US1: sin desplazamiento horizontal en la pantalla de inicio y el aviso del
   await createBoard(page, 'Equipo con un nombre largo para una pantalla estrecha');
   expect(await scrolls()).toBe(false);
 });
+
+/** Abre el tablero recién creado desde su aviso. */
+const openCreated = async (page: Page, dialog: Awaited<ReturnType<typeof createBoard>>, name: string) => {
+  const link = await dialog.getByLabel('Enlace del tablero').inputValue();
+  await dialog.getByRole('button', { name: 'Abrir tablero' }).click();
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible();
+  return link;
+};
+
+const addPerson = async (page: Page, name: string) => {
+  await page.getByRole('button', { name: 'Personas' }).click();
+  const people = page.getByRole('dialog', { name: 'Personas del equipo' });
+  await people.getByLabel('Nombre').fill(name);
+  await people.getByRole('button', { name: 'Añadir' }).click();
+  await expect(people.getByText(name, { exact: true })).toBeVisible();
+  await people.getByRole('button', { name: 'Cerrar' }).click();
+};
+
+test('US2: los datos de un tablero no aparecen en otro', async ({ page }) => {
+  const linkA = await openCreated(page, await createBoard(page, 'Equipo A'), 'Equipo A');
+  await addPerson(page, 'Ana');
+  await page.getByLabel('Título').fill('Solo A');
+  await page.getByRole('button', { name: 'Crear tarea' }).click();
+  await showColumn(page, 'Pendiente');
+  await expect(columnRegion(page, 'Pendiente').getByRole('button', { name: 'Solo A', exact: true })).toBeVisible();
+
+  await openCreated(page, await createBoard(page, 'Equipo B'), 'Equipo B');
+  await expect(page.getByRole('region', { name: 'Tablero de tareas' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Solo A', exact: true })).toHaveCount(0);
+  await page.getByRole('searchbox', { name: 'Buscar tareas' }).fill('Solo A');
+  await expect(page.locator('.no-results__message')).toHaveText('No hay tareas que coincidan con «Solo A»');
+  await expect(page.getByRole('combobox', { name: 'Filtrar por responsable' }).getByRole('option', { name: 'Ana' })).toHaveCount(0);
+
+  // B admite su propia "Ana" (la unicidad de nombres es por tablero).
+  await addPerson(page, 'Ana');
+
+  // A sigue intacto.
+  await page.goto(linkA);
+  await expect(page.getByRole('heading', { level: 1, name: 'Equipo A' })).toBeVisible();
+  await showColumn(page, 'Pendiente');
+  await expect(columnRegion(page, 'Pendiente').getByRole('button', { name: 'Solo A', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Personas' }).click();
+  const people = page.getByRole('dialog', { name: 'Personas del equipo' });
+  await expect(people.getByRole('listitem')).toHaveCount(1);
+  await expect(people.getByText('Ana', { exact: true })).toBeVisible();
+});

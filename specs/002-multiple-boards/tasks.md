@@ -122,12 +122,15 @@ en B, ni en el tablero, ni en la búsqueda, ni en el filtro de responsable.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T029 [P] [US2] Write integration tests in `apps/api/tests/integration/board-isolation.test.ts` with two boards created through `POST /boards` (research R27): with B's code, `GET`/`PATCH`/`DELETE`/`restore` of an A task → `404 TASK_NOT_FOUND` and the A task unchanged; `DELETE` of an A person → `404 PERSON_NOT_FOUND`; assigning an A person to a B task → `422 ASSIGNEE_NOT_FOUND`; `GET /tasks` with `q` and `assignee` and `GET /people` return only B data and counts; both boards can have a person "Ana"; regenerating A's code leaves B's working
-- [ ] T030 [P] [US2] Add the US2 block to `e2e/tests/boards.spec.ts`: create A with "Solo A" and "Ana", create and open B, check that neither appears and that B accepts another "Ana"
+- [X] T029 [P] [US2] Write integration tests in `apps/api/tests/integration/board-isolation.test.ts` with two boards created through `POST /boards` (research R27): with B's code, `GET`/`PATCH`/`DELETE`/`restore` of an A task → `404 TASK_NOT_FOUND` and the A task unchanged; `DELETE` of an A person → `404 PERSON_NOT_FOUND`; assigning an A person to a B task → `422 ASSIGNEE_NOT_FOUND`; `GET /tasks` with `q` and `assignee` and `GET /people` return only B data and counts; both boards can have a person "Ana"; regenerating A's code leaves B's working
+- [X] T030 [P] [US2] Add the US2 block to `e2e/tests/boards.spec.ts`: create A with "Solo A" and "Ana", create and open B, check that neither appears and that B accepts another "Ana"
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Run T029–T030; if any check fails, add the missing `board_id` filter in the repository involved (`apps/api/src/persistence/repositories/task-repository.ts` or `person-repository.ts`) or in the use case of `packages/domain/src/use-cases/`, with a test that reproduces the failure (constitución IV), and record the finding in this task
+- [X] T031 [US2] Run T029–T030; if any check fails, add the missing `board_id` filter in the repository involved (`apps/api/src/persistence/repositories/task-repository.ts` or `person-repository.ts`) or in the use case of `packages/domain/src/use-cases/`, with a test that reproduces the failure (constitución IV), and record the finding in this task
+  - **Resultado (2026-10-17)**: ningún filtro por `board_id` falta; T029 pasa sin cambios en la API. Para comprobar que las pruebas no son vacías se quitaron temporalmente los filtros de tablero de `task-repository.ts` (3 pruebas fallan) y de `person-repository.ts` (2 fallan), y se restauraron.
+  - **Defecto encontrado y corregido** (anterior a la 002): al pegar el enlace de otro tablero en la misma pestaña, la app vaciaba la caché pero no volvía a montar el tablero, y podía seguir mostrando datos del anterior (fallo intermitente del E2E de T030). Prueba de regresión `apps/web/tests/access/switch-board.test.tsx`; arreglo en `apps/web/src/app/App.tsx` (el tablero se vuelve a montar con cada código).
+  - **Observación, sin cambios**: los ids de tareas y personas son globales; reutilizar en B un id de A da `409 ID_CONFLICT` sin revelar datos de A (probado). Solo confirma que ese UUID existe en algún tablero; evitarlo requeriría claves compuestas `(board_id, id)`, que es un cambio de esquema (decisión de arquitectura pendiente del usuario).
 
 **Checkpoint**: US1 + US2 = MVP seguro para varios equipos.
 
