@@ -36,6 +36,10 @@ export const CreatedBoardWithCodeSchema = CreatedBoardSchema.extend({
 });
 export type CreatedBoardWithCode = z.infer<typeof CreatedBoardWithCodeSchema>;
 
+/** Respuesta de POST /boards: 201 con código o 200 (repetición) sin él. */
+export const CreateBoardResponseSchema = z.union([CreatedBoardWithCodeSchema, CreatedBoardSchema]);
+export type CreateBoardResponse = z.infer<typeof CreateBoardResponseSchema>;
+
 export const RenameBoardRequestSchema = z.strictObject({ name: BoardNameSchema });
 export type RenameBoardRequest = z.infer<typeof RenameBoardRequestSchema>;
 

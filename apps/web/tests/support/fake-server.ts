@@ -34,6 +34,14 @@ export const createFakeServer = () => {
   let clock = Date.parse('2026-10-17T10:00:00.000Z');
   const failures: Array<() => Response | Promise<Response>> = [];
   let hold: Promise<void> | null = null;
+  // Tablero abierto y tableros creados desde la web (feature 002).
+  const board = { id: 'b0000000-0000-4000-8000-000000000001', name: 'Mi tablero' };
+  const createdBoards = new Map<string, string>();
+  const boardByCode = new Map<string, string>();
+  const rejectedCodes = new Set<string>();
+  let creationEnabled = true;
+  let nextCode = 0;
+  const PUBLIC_PATHS = new Set(['/api/v1/public-config', '/api/v1/boards']);
 
   const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(String(input), 'http://localhost');
@@ -44,6 +52,38 @@ export const createFakeServer = () => {
       if (failure) return failure();
     }
 
+    const authorization = new Headers(init?.headers).get('authorization');
+    if (PUBLIC_PATHS.has(url.pathname) && authorization) {
+      throw new Error(`La ruta pública ${url.pathname} no debe recibir el código de acceso`);
+    }
+    if (authorization && rejectedCodes.has(authorization.replace(/^Bearer /, ''))) {
+      return problem(401, 'INVALID_LINK');
+    }
+
+    if (url.pathname === '/api/v1/public-config' && method === 'GET') {
+      return json(200, { boardCreationEnabled: creationEnabled });
+    }
+    if (url.pathname === '/api/v1/boards' && method === 'POST') {
+      const body = JSON.parse(String(init?.body)) as { id: string; name: string };
+      const name = body.name.trim();
+      const existing = createdBoards.get(body.id);
+      if (existing !== undefined) return existing === name ? json(200, { id: body.id, name }) : problem(409, 'ID_CONFLICT');
+      createdBoards.set(body.id, name);
+      nextCode += 1;
+      const accessCode = String(nextCode).padStart(43, 'C');
+      boardByCode.set(accessCode, body.id);
+      return json(201, { id: body.id, name, accessCode });
+    }
+    if (url.pathname === '/api/v1/board' && method === 'GET') {
+      const createdId = boardByCode.get(authorization?.replace(/^Bearer /, '') ?? '');
+      return json(200, {
+        ...board,
+        ...(createdId ? { id: createdId, name: createdBoards.get(createdId) } : {}),
+        accessCodeRotatedAt: new Date(clock).toISOString(),
+        taskCount: tasks.length,
+        personCount: people.length,
+      });
+    }
     if (url.pathname === '/api/v1/board/access-code/regenerate' && method === 'POST') {
       return json(200, { accessCode: 'N'.repeat(43), rotatedAt: new Date(clock).toISOString() });
     }
@@ -179,6 +219,19 @@ export const createFakeServer = () => {
         updatedAt: now,
         ...partial,
       });
+    },
+    board,
+    /** La creación de tableros desde la web está desactivada (FR-106). */
+    disableBoardCreation() {
+      creationEnabled = false;
+    },
+    /** Cualquier petición con este código responde 401 INVALID_LINK. */
+    rejectCode(code: string) {
+      rejectedCodes.add(code);
+    },
+    /** Simula que el tablero ya se creó en un intento cuya respuesta se perdió (FR-104). */
+    markBoardCreated(id: string, name: string) {
+      createdBoards.set(id, name);
     },
     /** Las restauraciones responden 410 UNDO_EXPIRED. */
     expireRestores() {

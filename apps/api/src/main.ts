@@ -17,6 +17,7 @@ const app = await buildApp({
     unauthorized: env.RATE_LIMIT_UNAUTHORIZED,
   },
   trustProxy: env.TRUST_PROXY,
+  boardCreation: { enabled: env.BOARD_CREATION_ENABLED, perHour: env.BOARD_CREATION_PER_HOUR },
 });
 
 const stopPurge = startPurgeJob({ tasks: new KyselyTaskRepository(db), clock: systemClock }, app.log);

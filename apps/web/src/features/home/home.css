@@ -1,0 +1,36 @@
+.home {
+  max-width: 32rem;
+  margin: 10vh auto 0;
+  padding: var(--space-4);
+}
+.home__title {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+.home__create {
+  margin-top: var(--space-4);
+}
+.create-board {
+  display: grid;
+  gap: var(--space-3);
+}
+.new-board {
+  display: grid;
+  gap: var(--space-3);
+}
+.new-board__warning {
+  margin: 0;
+}
+.new-board__link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+}
+.new-board__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.new-board__confirm {
+  display: grid;
+  gap: var(--space-2);
+}

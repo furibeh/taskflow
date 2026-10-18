@@ -1,62 +1,107 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiProvider } from '../api/ApiContext';
+import { useBoard } from '../api/board';
 import { createApiClient, type ApiClient } from '../api/client';
 import { InvalidLinkPage } from '../features/access/InvalidLinkPage';
 import { ShareLinkDialog } from '../features/access/ShareLinkDialog';
+import { HomePage } from '../features/home/HomePage';
 import { PeopleDialog } from '../features/people/PeopleDialog';
 import { es } from '../i18n/es';
 import { Button } from '../ui/Button';
 import { LiveRegionProvider } from '../ui/LiveRegion';
-import { getAccessCode, reloadAccessCodeFromHash } from './access-code';
+import { getAccessCode, reloadAccessCodeFromHash, setAccessCode } from './access-code';
 import { BoardPage } from './BoardPage';
 import { createQueryClient } from './queryClient';
 
 interface AppProps {
-  /** Permite inyectar un cliente en pruebas. */
+  /** Cliente ya construido: las pruebas del tablero lo inyectan y la app muestra el tablero. */
   readonly apiClient?: ApiClient;
+  /** `fetch` simulado: las pruebas de inicio usan la app real con el código del fragmento. */
+  readonly fetchImpl?: typeof fetch;
 }
 
-export const App = ({ apiClient }: AppProps) => {
+type View = 'home' | 'invalid' | 'board';
+
+/** Cabecera y contenido del tablero abierto, con su nombre (FR-113). */
+const OpenBoard = () => {
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [invalidLink, setInvalidLink] = useState(() => !apiClient && getAccessCode() === null);
+  const board = useBoard();
+  const name = board.data?.name;
+
+  useEffect(() => {
+    document.title = name ? `«${name}» · ${es.appName}` : es.appName;
+  }, [name]);
+
+  return (
+    <>
+      <header className="app-header">
+        <h1 className="app-header__title">{name ?? es.appName}</h1>
+        <nav className="app-header__actions" aria-label="Acciones del tablero">
+          <Button onClick={() => setPeopleOpen(true)}>{es.people.open}</Button>
+          <Button onClick={() => setShareOpen(true)}>{es.share.open}</Button>
+        </nav>
+      </header>
+      <PeopleDialog open={peopleOpen} onClose={() => setPeopleOpen(false)} />
+      <ShareLinkDialog open={shareOpen} onClose={() => setShareOpen(false)} />
+      <BoardPage />
+    </>
+  );
+};
+
+export const App = ({ apiClient, fetchImpl }: AppProps) => {
+  const [view, setView] = useState<View>(() => (apiClient || getAccessCode() !== null ? 'board' : 'home'));
   const [queryClient] = useState(createQueryClient);
   const [client] = useState(
-    () => apiClient ?? createApiClient({ getAccessCode, onInvalidLink: () => setInvalidLink(true) }),
+    () =>
+      apiClient ??
+      createApiClient({
+        getAccessCode,
+        onInvalidLink: () => setView('invalid'),
+        ...(fetchImpl ? { fetchImpl } : {}),
+      }),
+  );
+
+  // Fuera del tablero, el título de la pestaña vuelve a ser el de la aplicación.
+  useEffect(() => {
+    if (view !== 'board') document.title = es.appName;
+  }, [view]);
+
+  // Abrir otro tablero (enlace pegado o recién creado) descarta los datos del anterior.
+  const knownCode = useRef(apiClient ? null : getAccessCode());
+  const switchTo = useCallback(
+    (code: string | null) => {
+      knownCode.current = code;
+      queryClient.clear();
+      setView(code === null ? 'home' : 'board');
+    },
+    [queryClient],
   );
 
   // Pegar otro enlace en la misma pestaña solo cambia el fragmento (#k=…), sin recargar.
-  const knownCode = useRef(apiClient ? null : getAccessCode());
   useEffect(() => {
     if (apiClient) return;
     const onHashChange = () => {
       const next = reloadAccessCodeFromHash();
-      if (next === knownCode.current) return;
-      knownCode.current = next;
-      queryClient.clear();
-      setInvalidLink(next === null);
+      if (next !== knownCode.current) switchTo(next);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, [apiClient, queryClient]);
+  }, [apiClient, switchTo]);
 
-  if (invalidLink) return <InvalidLinkPage />;
+  const openBoard = (code: string) => {
+    setAccessCode(code);
+    switchTo(code);
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
       <ApiProvider client={client}>
         <LiveRegionProvider>
-          <header className="app-header">
-            <h1 className="app-header__title">{es.appName}</h1>
-            <nav className="app-header__actions" aria-label="Acciones del tablero">
-              <Button onClick={() => setPeopleOpen(true)}>{es.people.open}</Button>
-              <Button onClick={() => setShareOpen(true)}>{es.share.open}</Button>
-            </nav>
-          </header>
-          <PeopleDialog open={peopleOpen} onClose={() => setPeopleOpen(false)} />
-          <ShareLinkDialog open={shareOpen} onClose={() => setShareOpen(false)} />
-          <BoardPage />
+          {view === 'home' && <HomePage onOpenBoard={openBoard} />}
+          {view === 'invalid' && <InvalidLinkPage onOpenBoard={openBoard} />}
+          {view === 'board' && <OpenBoard />}
         </LiveRegionProvider>
       </ApiProvider>
     </QueryClientProvider>

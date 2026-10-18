@@ -10,11 +10,14 @@ test.beforeEach(async () => {
 test('un código incorrecto muestra "Enlace no válido" sin ningún dato', async ({ page }) => {
   await page.goto('/#k=incorrecto');
   await expect(page.getByRole('heading', { name: 'Enlace no válido' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'TaskFlow' })).toBeHidden();
+  await expect(page.getByRole('region', { name: 'Tablero de tareas' })).toBeHidden();
   await expect(page.getByRole('article')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Crear un tablero nuevo' })).toBeVisible();
 
+  // Sin código, la pantalla de inicio (feature 002, US1), tampoco con datos de ningún tablero.
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Enlace no válido' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Tableros de tareas para tu equipo' })).toBeVisible();
+  await expect(page.getByRole('article')).toHaveCount(0);
 });
 
 test('regenerar en un contexto invalida el enlace en el otro en su siguiente acción', async ({
@@ -44,7 +47,7 @@ test('regenerar en un contexto invalida el enlace en el otro en su siguiente acc
   await expect(other.getByRole('heading', { name: 'Enlace no válido' })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'TaskFlow' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Tablero de tareas' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Con el enlace viejo', exact: true })).toHaveCount(0);
   await other.close();
 });
