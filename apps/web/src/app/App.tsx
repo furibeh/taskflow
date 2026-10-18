@@ -53,6 +53,8 @@ const OpenBoard = () => {
 export const App = ({ apiClient, fetchImpl }: AppProps) => {
   const [view, setView] = useState<View>(() => (apiClient || getAccessCode() !== null ? 'board' : 'home'));
   const [queryClient] = useState(createQueryClient);
+  // Cada tablero abierto es una sesión nueva: se vuelve a montar con su código (US2).
+  const [session, setSession] = useState(0);
   const [client] = useState(
     () =>
       apiClient ??
@@ -73,7 +75,10 @@ export const App = ({ apiClient, fetchImpl }: AppProps) => {
   const switchTo = useCallback(
     (code: string | null) => {
       knownCode.current = code;
+      // Vaciar la caché no basta: las consultas ya montadas no siempre se repiten y la pantalla
+      // podría seguir mostrando datos del tablero anterior.
       queryClient.clear();
+      setSession((n) => n + 1);
       setView(code === null ? 'home' : 'board');
     },
     [queryClient],
@@ -101,7 +106,7 @@ export const App = ({ apiClient, fetchImpl }: AppProps) => {
         <LiveRegionProvider>
           {view === 'home' && <HomePage onOpenBoard={openBoard} />}
           {view === 'invalid' && <InvalidLinkPage onOpenBoard={openBoard} />}
-          {view === 'board' && <OpenBoard />}
+          {view === 'board' && <OpenBoard key={session} />}
         </LiveRegionProvider>
       </ApiProvider>
     </QueryClientProvider>
